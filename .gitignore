@@ -1,0 +1,6 @@
+
+/packages
+*.suo
+/scalejs.grid-slick/build
+/scalejs.grid-slick/obj
+/scalejs.grid-slick/scalejs.grid-slick.csproj.user

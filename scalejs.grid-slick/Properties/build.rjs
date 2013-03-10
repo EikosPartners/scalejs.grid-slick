@@ -1,0 +1,7 @@
+﻿({
+	mainConfigFile: '../config.js',
+    include: 'scalejs.grid-slick',
+    exclude: [
+        'scalejs!core'
+    ]
+})
