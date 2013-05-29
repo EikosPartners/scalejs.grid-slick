@@ -5,6 +5,8 @@
     <OutputType>Library</OutputType>
     <OutputPath>build</OutputPath>
     <JSLintSkip>\Scripts\</JSLintSkip>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="css\slick-default-theme.css" />
@@ -13,8 +15,12 @@
     <Content Include="images\header-columns-bg.gif" />
     <Content Include="images\header-columns-over-bg.gif" />
     <Content Include="Properties\build.rjs" />
-    <Content Include="Properties\scalejs.grid-slick.nuspec" />
+    <Content Include="Properties\scalejs.grid-slick.nuspec">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="scalejs.grid-slick.js" />
+    <Content Include="scalejs.grid-slick\observableFilters.js" />
+    <Content Include="scalejs.grid-slick\observableDataview.js" />
     <Content Include="scalejs.grid-slick\slickGrid.js" />
     <Content Include="Scripts\es5-shim.js" />
     <Content Include="Scripts\es5-shim.min.js" />

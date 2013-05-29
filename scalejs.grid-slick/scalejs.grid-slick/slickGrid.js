@@ -1,30 +1,33 @@
 ﻿/*global define*/
 /// <reference path="../Scripts/_references.js" />
 define([
-    'scalejs!core',
+    'require',
+    //'scalejs!core',
+    './observableDataview',
     'knockout',
     'slick.grid',
-    'slick.dataview',
-    'slick.rowselectionmodel',
-    'scalejs.linq-linqjs'
+    './observableFilters'
+    //'slick.dataview',
+    //'slick.rowselectionmodel'
 ], function (
-    core,
+    require,
+    //core,
+    observableDataView,
     ko,
     Slick
 ) {
-    /// <param name="ko" value="window.ko" />
     'use strict';
 
-    var computed = ko.computed,
-        unwrap = ko.utils.unwrapObservable,
-        toEnumerable = core.linq.enumerable.from;
+    /// <param name="ko" value="window.ko" />
+    var isObservable = ko.isObservable;
 
     function slickGrid(element, options) {
         var dataView,
             grid;
 
         function createDataView() {
-            dataView = new Slick.Data.DataView({ inlineFilters: true });
+            //dataView = new Slick.Data.DataView({ inlineFilters: true });
+            dataView = observableDataView(options);
 
             /*jslint unparam: true*/
             dataView.onRowCountChanged.subscribe(function (e, args) {
@@ -35,73 +38,97 @@ define([
 
             /*jslint unparam: true*/
             dataView.onRowsChanged.subscribe(function (e, args) {
-                grid.invalidateRows(args.rows);
-                grid.render();
+                var range, invalidated;
+
+                range = grid.getRenderedRange();
+
+                invalidated = args.rows.filter(function (r, i) {
+                    return r >= range.top && r <= range.bottom;
+                });
+
+                if (invalidated.length > 0) {
+                    grid.invalidateRows(invalidated);
+                    grid.render();
+                }
             });
             /*jslint unparam: false*/
         }
 
-        function resetItems(newItems) {
-            dataView.beginUpdate();
-            dataView.setItems(newItems);
-            dataView.endUpdate();
-        }
 
         /*jslint unparam: true*/
         function subscribeToOnSort() {
-            grid.onSort.subscribe(function (e, args) {
-                var ordered,
-                    items = dataView.getItems();
+            if (isObservable(options.sorting)) {
+                grid.onSort.subscribe(function (e, args) {
+                    if (args.multiColumnSort) {
+                        throw new Error('Multi column sort is not implemented');
+                    }
 
-                function orderBy(source, col) {
-                    return col.sortAsc
-                        ? source.orderBy('$.' + col.sortCol.field)
-                        : source.orderByDescending('$.' + col.sortCol.field);
-                }
+                    var sort = {};
+                    sort[args.sortCol.field] = args.sortAsc;
 
-                function thenBy(source, col) {
-                    return col.sortAsc
-                        ? source.thenBy('$.' + col.sortCol.field)
-                        : source.thenByDescending('$.' + col.sortCol.field);
-                }
+                    options.sorting(sort);
+                });
 
-                if (args.sortCols.length === 0) { return; }
+                options.sorting.subscribe(function (newSort) {
+                    var sorts = Object.keys(newSort),
+                        sort = sorts[0];
 
-                ordered = orderBy(toEnumerable(items), args.sortCols[0]);
-                ordered = toEnumerable(args.sortCols)
-                    .skip(1)
-                    .aggregate(ordered, thenBy);
-
-                items = ordered.toArray();
-                resetItems(items);
-            });
+                    grid.setSortColumn(sort, newSort[sort]);
+                });
+            }
         }
         /*jslint unparam: false*/
 
-        function subscribeToItemsObservable() {
-            computed({
-                read: function () {
-                    var items = unwrap(options.itemsSource);
-                    resetItems(items);
-                },
-                disposeWhenNodeIsRemoved: element
-            });
-        }
-
         function createGrid() {
+            var plugins;
+
+            options.explicitInitialization = true;
             grid = new Slick.Grid(element, dataView, options.columns, options);
 
+            if (options.plugins) {
+                plugins = Object.keys(options.plugins).map(function (p) {
+                    return ['observableFilters'].indexOf(p) >= 0 ? './' + p : p;
+                });
+
+                require(plugins, function () {
+                    var i,
+                        plugin,
+                        createPlugin;
+                    for (i = 0; i < arguments.length; i += 1) {
+                        createPlugin = arguments[i];
+                        plugin = createPlugin(options.plugins[createPlugin.name]);
+
+                        grid.registerPlugin(plugin);
+                    }
+                });
+            }
+
             grid.setSelectionModel(new Slick.RowSelectionModel());
+            grid.init();
+        }
+
+        function subscribeToViewport() {
+            if (isObservable(options.viewport)) {
+                grid.onViewportChanged.subscribe(function () {
+                    var vp = grid.getViewport();
+                    options.viewport(vp);
+                });
+
+                options.viewport.subscribe(function (vp) {
+                    grid.scrollRowIntoView(vp.top);
+                });
+            }
         }
 
         createDataView();
         createGrid();
-        subscribeToItemsObservable();
+
         subscribeToOnSort();
+        subscribeToViewport();
     }
 
     /*jslint unparam:true*/
-    function update(
+    function init(
         element,
         valueAccessor,
         allBindingsAccessor
@@ -110,10 +137,12 @@ define([
             options = b.slickGrid;
 
         slickGrid(element, options);
+
+        return { controlsDescendantBindings: true };
     }
     /*jslint unparam:false*/
 
     return {
-        update: update
+        init: init
     };
 });
