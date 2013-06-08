@@ -2,19 +2,20 @@
 /// <reference path="../Scripts/_references.js" />
 define([
     'require',
+    'knockout',
+    'jQuery',
+    'slick.grid',
     //'scalejs!core',
     './observableDataview',
-    'knockout',
-    'slick.grid',
-    './observableFilters'
-    //'slick.dataview',
-    //'slick.rowselectionmodel'
+    './observableFilters',
+    './changesFlasher'
 ], function (
     require,
-    //core,
-    observableDataView,
     ko,
-    Slick
+    $,
+    Slick,
+    //core,
+    observableDataView
 ) {
     'use strict';
 
@@ -84,10 +85,15 @@ define([
 
             options.explicitInitialization = true;
             grid = new Slick.Grid(element, dataView, options.columns, options);
+            $(element).data('slickgrid', grid);
 
             if (options.plugins) {
                 plugins = Object.keys(options.plugins).map(function (p) {
-                    return ['observableFilters'].indexOf(p) >= 0 ? './' + p : p;
+                    // if one of the included plugins then prefix with ./ 
+                    return [
+                        'observableFilters',
+                        'changesFlasher'
+                    ].indexOf(p) >= 0 ? './' + p : p;
                 });
 
                 require(plugins, function () {
@@ -107,6 +113,25 @@ define([
             grid.init();
         }
 
+        function subscribeToDataView() {
+            dataView.subscribe();
+        }
+
+        function subscribeToSelection() {
+            if (isObservable(options.selectedItem)) {
+                /*jslint unparam:true*/
+                grid.getSelectionModel().onSelectedRangesChanged.subscribe(function (ranges) {
+                    var rows, item;
+
+                    rows = grid.getSelectedRows();
+                    item = grid.getDataItem(rows[0]);
+
+                    options.selectedItem(item);
+                });
+                /*jslint unparam:false*/
+            }
+        }
+
         function subscribeToViewport() {
             if (isObservable(options.viewport)) {
                 grid.onViewportChanged.subscribe(function () {
@@ -123,6 +148,8 @@ define([
         createDataView();
         createGrid();
 
+        subscribeToDataView();
+        subscribeToSelection();
         subscribeToOnSort();
         subscribeToViewport();
     }

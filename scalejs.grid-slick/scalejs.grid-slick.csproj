@@ -19,6 +19,7 @@
       <SubType>Designer</SubType>
     </Content>
     <Content Include="scalejs.grid-slick.js" />
+    <Content Include="scalejs.grid-slick\changesFlasher.js" />
     <Content Include="scalejs.grid-slick\observableFilters.js" />
     <Content Include="scalejs.grid-slick\observableDataview.js" />
     <Content Include="scalejs.grid-slick\slickGrid.js" />
@@ -42,6 +43,7 @@
     <Content Include="Scripts\slick.editors.js" />
     <Content Include="Scripts\slick.formatters.js" />
     <Content Include="Scripts\slick.grid.js" />
+    <Content Include="Scripts\slick.rowselectionmodel.js" />
     <Content Include="Scripts\_references.js" />
     <Content Include="tools\install.ps1" />
     <Content Include="tools\uninstall.ps1" />

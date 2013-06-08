@@ -1,7 +1,8 @@
 /*global define*/
 define([
     './scalejs.grid-slick/slickGrid',
-    'knockout'
+    'knockout',
+    'scalejs.linq-linqjs'
 ], function (
     slickGrid,
     ko
