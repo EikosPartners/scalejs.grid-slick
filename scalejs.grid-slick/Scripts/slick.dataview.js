@@ -54,10 +54,13 @@
       getter: null,
       formatter: null,
       comparer: function(a, b) { return a.value - b.value; },
+      predefinedValues: [],
       aggregators: [],
+      aggregateEmpty: false,
       aggregateCollapsed: false,
       aggregateChildGroups: false,
-      collapsed: false
+      collapsed: false,
+      displayTotalsRow: true
     };
     var groupingInfos = [];
     var groups = [];
@@ -263,7 +266,7 @@
      */
     function setAggregators(groupAggregators, includeCollapsed) {
       if (!groupingInfos.length) {
-        throw new Error("At least must setGrouping must be specified before calling setAggregators().");
+        throw new Error("At least one grouping must be specified before calling setAggregators().");
       }
 
       groupingInfos[0].aggregators = groupAggregators;
@@ -369,7 +372,7 @@
         return null;
       }
 
-      // overrides for setGrouping rows
+      // overrides for grouping rows
       if (item.__group) {
         return options.groupItemMetadataProvider.getGroupRowMetadata(item);
       }
@@ -454,23 +457,33 @@
       var group;
       var val;
       var groups = [];
-      var groupsByVal = [];
+      var groupsByVal = {};
       var r;
       var level = parentGroup ? parentGroup.level + 1 : 0;
       var gi = groupingInfos[level];
 
-      for (var i = 0, l = rows.length; i < l; i++) {
-        r = rows[i];
-        val = gi.getterIsAFn ? gi.getter(r) : r[gi.getter];
-        val = val || 0;
+      for (var i = 0, l = gi.predefinedValues.length; i < l; i++) {
+        val = gi.predefinedValues[i];
         group = groupsByVal[val];
         if (!group) {
           group = new Slick.Group();
-          group.count = 0;
           group.value = val;
           group.level = level;
           group.groupingKey = (parentGroup ? parentGroup.groupingKey + groupingDelimiter : '') + val;
-          group.rows = [];
+          groups[groups.length] = group;
+          groupsByVal[val] = group;
+        }
+      }
+
+      for (var i = 0, l = rows.length; i < l; i++) {
+        r = rows[i];
+        val = gi.getterIsAFn ? gi.getter(r) : r[gi.getter];
+        group = groupsByVal[val];
+        if (!group) {
+          group = new Slick.Group();
+          group.value = val;
+          group.level = level;
+          group.groupingKey = (parentGroup ? parentGroup.groupingKey + groupingDelimiter : '') + val;
           groups[groups.length] = group;
           groupsByVal[val] = group;
         }
@@ -524,7 +537,8 @@
           calculateTotals(g.groups, level + 1);
         }
 
-        if (gi.aggregators.length) {
+        if (gi.aggregators.length && (
+            gi.aggregateEmpty || g.rows.length || (g.groups && g.groups.length))) {
           calculateGroupTotals(g);
         }
       }
@@ -546,25 +560,27 @@
           // Let the non-leaf setGrouping rows get garbage-collected.
           // They may have been used by aggregates that go over all of the descendants,
           // but at this point they are no longer needed.
-          g.rows = null;
+          g.rows = [];
         }
       }
     }
 
-    function flattenGroupedRows(groups) {
+    function flattenGroupedRows(groups, level) {
+      level = level || 0;
+      var gi = groupingInfos[level];
       var groupedRows = [], rows, gl = 0, g;
       for (var i = 0, l = groups.length; i < l; i++) {
         g = groups[i];
         groupedRows[gl++] = g;
 
         if (!g.collapsed) {
-          rows = g.groups ? flattenGroupedRows(g.groups) : g.rows;
+          rows = g.groups ? flattenGroupedRows(g.groups, level + 1) : g.rows;
           for (var j = 0, jj = rows.length; j < jj; j++) {
             groupedRows[gl++] = rows[j];
           }
         }
 
-        if (g.totals && (!g.collapsed || groupingInfos[g.level].aggregateCollapsed)) {
+        if (g.totals && gi.displayTotalsRow && (!g.collapsed || gi.aggregateCollapsed)) {
           groupedRows[gl++] = g.totals;
         }
       }
@@ -597,10 +613,10 @@
       var filterInfo = getFunctionInfo(filter);
 
       var filterBody = filterInfo.body
-          .replace(/return false[;}]/gi, "{ continue _coreloop; }")
-          .replace(/return true[;}]/gi, "{ _retval[_idx++] = $item$; continue _coreloop; }")
-          .replace(/return ([^;}]+?);/gi,
-          "{ if ($1) { _retval[_idx++] = $item$; }; continue _coreloop; }");
+          .replace(/return false\s*([;}]|$)/gi, "{ continue _coreloop; }$1")
+          .replace(/return true\s*([;}]|$)/gi, "{ _retval[_idx++] = $item$; continue _coreloop; }$1")
+          .replace(/return ([^;}]+?)\s*([;}]|$)/gi,
+          "{ if ($1) { _retval[_idx++] = $item$; }; continue _coreloop; }$2");
 
       // This preserves the function template code after JS compression,
       // so that replace() commands still work as expected.
@@ -629,10 +645,10 @@
       var filterInfo = getFunctionInfo(filter);
 
       var filterBody = filterInfo.body
-          .replace(/return false[;}]/gi, "{ continue _coreloop; }")
-          .replace(/return true[;}]/gi, "{ _cache[_i] = true;_retval[_idx++] = $item$; continue _coreloop; }")
-          .replace(/return ([^;}]+?);/gi,
-          "{ if ((_cache[_i] = $1)) { _retval[_idx++] = $item$; }; continue _coreloop; }");
+          .replace(/return false\s*([;}]|$)/gi, "{ continue _coreloop; }$1")
+          .replace(/return true\s*([;}]|$)/gi, "{ _cache[_i] = true;_retval[_idx++] = $item$; continue _coreloop; }$1")
+          .replace(/return ([^;}]+?)\s*([;}]|$)/gi,
+          "{ if ((_cache[_i] = $1)) { _retval[_idx++] = $item$; }; continue _coreloop; }$2");
 
       // This preserves the function template code after JS compression,
       // so that replace() commands still work as expected.
@@ -894,7 +910,7 @@
       this.onRowCountChanged.subscribe(update);
     }
 
-    return {
+    $.extend(this, {
       // methods
       "beginUpdate": beginUpdate,
       "endUpdate": endUpdate,
@@ -940,7 +956,7 @@
       "onRowCountChanged": onRowCountChanged,
       "onRowsChanged": onRowsChanged,
       "onPagingInfoChanged": onPagingInfoChanged
-    };
+    });
   }
 
   function AvgAggregator(field) {

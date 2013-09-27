@@ -1,20 +1,20 @@
 ﻿/*global define*/
 /// <reference path="../Scripts/_references.js" />
 define([
+    'scalejs!core',
     'require',
     'knockout',
     'jQuery',
     'slick.grid',
-    //'scalejs!core',
     './observableDataview',
     './observableFilters',
     './changesFlasher'
 ], function (
+    core,
     require,
     ko,
     $,
     Slick,
-    //core,
     observableDataView
 ) {
     'use strict';
@@ -87,6 +87,8 @@ define([
             grid = new Slick.Grid(element, dataView, options.columns, options);
             $(element).data('slickgrid', grid);
 
+            grid.setSelectionModel(new Slick.RowSelectionModel());
+
             if (options.plugins) {
                 plugins = Object.keys(options.plugins).map(function (p) {
                     // if one of the included plugins then prefix with ./ 
@@ -106,7 +108,10 @@ define([
 
                         grid.registerPlugin(plugin);
                     }
+                    grid.init();
                 });
+            } else {
+                grid.init();
             }
 
             grid.setSelectionModel(new Slick.RowSelectionModel());
@@ -145,6 +150,18 @@ define([
             }
         }
 
+        function subscribeToLayout() {
+            if (core.layout.onLayoutDone) {
+                core.layout.onLayoutDone(function () {
+                    grid.resizeCanvas();
+                    if (isObservable(options.viewport)) {
+                        var vp = grid.getViewport();
+                        options.viewport(vp);
+                    }
+                });
+            }
+        }
+
         createDataView();
         createGrid();
 
@@ -152,6 +169,7 @@ define([
         subscribeToSelection();
         subscribeToOnSort();
         subscribeToViewport();
+        subscribeToLayout();
     }
 
     /*jslint unparam:true*/
