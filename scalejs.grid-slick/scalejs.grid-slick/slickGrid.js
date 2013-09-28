@@ -113,9 +113,6 @@ define([
             } else {
                 grid.init();
             }
-
-            grid.setSelectionModel(new Slick.RowSelectionModel());
-            grid.init();
         }
 
         function subscribeToDataView() {

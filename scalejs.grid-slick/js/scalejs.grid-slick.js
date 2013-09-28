@@ -379,9 +379,6 @@ define('scalejs.grid-slick/slickGrid',[
             } else {
                 grid.init();
             }
-
-            grid.setSelectionModel(new Slick.RowSelectionModel());
-            grid.init();
         }
 
         function subscribeToDataView() {
