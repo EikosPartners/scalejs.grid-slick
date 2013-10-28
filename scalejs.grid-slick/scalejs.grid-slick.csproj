@@ -20,6 +20,7 @@
     </Content>
     <Content Include="scalejs.grid-slick.js" />
     <Content Include="scalejs.grid-slick\changesFlasher.js" />
+    <Content Include="scalejs.grid-slick\filters.html" />
     <Content Include="scalejs.grid-slick\observableFilters.js" />
     <Content Include="scalejs.grid-slick\observableDataview.js" />
     <Content Include="scalejs.grid-slick\slickGrid.js" />
@@ -27,6 +28,8 @@
     <Content Include="Scripts\jquery-1.9.1.intellisense.js" />
     <Content Include="Scripts\jquery-1.9.1.js" />
     <Content Include="Scripts\jquery-1.9.1.min.js" />
+    <Content Include="Scripts\jquery-migrate-1.1.1.js" />
+    <Content Include="Scripts\jquery-migrate-1.1.1.min.js" />
     <Content Include="Scripts\jquery.event.drag.js" />
     <Content Include="Scripts\jquery.event.drag.live.js" />
     <Content Include="Scripts\jquery.event.drag.live.min.js" />
@@ -35,16 +38,16 @@
     <Content Include="Scripts\json2.min.js" />
     <Content Include="Scripts\knockout-2.2.1.debug.js" />
     <Content Include="Scripts\knockout-2.2.1.js" />
+    <Content Include="Scripts\linq-vsdoc.js" />
+    <Content Include="Scripts\linq.js" />
+    <Content Include="Scripts\linq.js.d.ts" />
+    <Content Include="Scripts\linq.min.js" />
     <Content Include="Scripts\r.js" />
     <Content Include="Scripts\require.js" />
     <Content Include="Scripts\scalejs-0.3.0.1.js" />
     <Content Include="Scripts\scalejs-0.3.0.1.min.js" />
-    <Content Include="Scripts\slick.core.js" />
-    <Content Include="Scripts\slick.dataview.js" />
-    <Content Include="Scripts\slick.editors.js" />
-    <Content Include="Scripts\slick.formatters.js" />
-    <Content Include="Scripts\slick.grid.js" />
-    <Content Include="Scripts\slick.rowselectionmodel.js" />
+    <Content Include="Scripts\scalejs.linq-linqjs-3.0.3.1.js" />
+    <Content Include="Scripts\scalejs.linq-linqjs-3.0.3.1.min.js" />
     <Content Include="Scripts\_references.js" />
     <Content Include="Scripts\_scalejs.intellisense.js" />
     <Content Include="tools\install.ps1" />

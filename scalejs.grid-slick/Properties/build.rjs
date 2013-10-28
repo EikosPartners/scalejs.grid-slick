@@ -2,6 +2,7 @@
 	mainConfigFile: '../config.js',
     include: 'scalejs.grid-slick',
     exclude: [
-        'scalejs!core'
+        'scalejs!core',
+		'text'
     ]
 })

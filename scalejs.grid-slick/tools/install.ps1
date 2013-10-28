@@ -8,7 +8,8 @@ $project |
 		'slick.core'				: 'Scripts/slick.core',
 		'slick.grid'				: 'Scripts/slick.grid',
 		'slick.dataview'			: 'Scripts/slick.dataview',
-		'slick.rowselectionmodel'	: 'Scripts/slick.rowselectionmodel'
+		'slick.rowselectionmodel'	: 'Scripts/slick.rowselectionmodel',
+		'bPopup'					: 'Scripts/jquery.bpopup.min'
 	}" |
 	Add-ScalejsExtension 'scalejs.grid-slick' |
 	Add-Shims "{
@@ -36,6 +37,9 @@ $project |
 					'jquery.event.drag'
 				],
 				exports	: 'Slick'
+			},
+			'bPopup'			: {
+				deps: ['jQuery']
 			}
 		}" |
 	Out-Null
