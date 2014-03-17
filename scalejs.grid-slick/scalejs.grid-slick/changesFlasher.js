@@ -6,7 +6,7 @@ define([
     core
 ) {
     /// <param name="ko" value="window.ko" />
-    'use strict';
+
 
     /*jslint unparam: true*/
     return function changesFlasher(opts) {
@@ -25,13 +25,21 @@ define([
 
             opts.fields = has(opts.fields) ? opts.fields : grid.getColumns().map(function (c) { return c.field; });
 
+            function keySelector(item) {
+                if (typeof (opts.key) === 'string') {
+                    return item[opts.key]
+                }
+                var key = opts.key.map(function (k) { return item[k] }).join('_');
+                return key;
+            }
+
             function cacheData() {
                 var item, i;
 
-                for (i = 0; i < grid.getDataLength(); i += 1) {
+                for (i = 0; i < grid.getDataLength() ; i += 1) {
                     item = grid.getDataItem(i);
                     if (has(item)) {
-                        oldItems[item[opts.key]] = item;
+                        oldItems[keySelector(item)] = item;
                     }
                 }
             }
@@ -54,7 +62,8 @@ define([
                     newItem = grid.getDataItem(row);
                     if (!has(newItem)) { return; }
 
-                    oldItem = oldItems[newItem[opts.key]];
+                    oldItem = oldItems[keySelector(newItem)];
+
                     if (!has(oldItem)) { return; }
 
 

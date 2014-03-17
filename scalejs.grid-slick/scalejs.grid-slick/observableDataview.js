@@ -11,7 +11,7 @@ define([
 ) {
     /// <param name="ko" value="window.ko" />
 
-    'use strict';
+
 
     var isObservable = ko.isObservable,
         computed = ko.computed;
@@ -29,6 +29,10 @@ define([
             return opts.itemsSource().length;
         }
 
+        function getItems() {
+            return items;
+        }
+
         function getItem(index) {
             return items ? items[index] : null;
         }
@@ -43,7 +47,7 @@ define([
 
             if (isObservable(opts.itemsCount)) {
                 opts.itemsCount.subscribe(function (newCount) {
-                    onRowCountChanged.notify({previous: oldCount, current: newCount}, null, null);
+                    onRowCountChanged.notify({ previous: oldCount, current: newCount }, null, null);
                     oldCount = newCount;
                 });
             } else {
@@ -52,7 +56,7 @@ define([
                         var newItems = opts.itemsSource() || [],
                             newCount = newItems.length;
 
-                        onRowCountChanged.notify({previous: oldCount, current: newCount}, null, null);
+                        onRowCountChanged.notify({ previous: oldCount, current: newCount }, null, null);
                         oldCount = newCount;
                     }
                 });
@@ -75,7 +79,9 @@ define([
                     deletedIndexes.forEach(function (index) { delete items[index]; });
 
                     rows = newItems
-                        .filter(function (newItem) { return items[newItem.index] !== newItem; })
+                        .filter(function (newItem) {
+                            return items[newItem.index] !== newItem;
+                        })
                         .map(function (newItem) {
                             //var oldItem
                             items[newItem.index] = newItem;
@@ -83,7 +89,7 @@ define([
                         });
 
                     if (rows.length > 0) {
-                        onRowsChanged.notify({rows: rows}, null, null);
+                        onRowsChanged.notify({ rows: rows }, null, null);
                     }
                 }
             });
@@ -103,6 +109,7 @@ define([
             getLength: getLength,
             getItem: getItem,
             getItemMetadata: getItemMetadata,
+            getItems: getItems,
             // additional funcitonality
             subscribe: subscribe,
             // events

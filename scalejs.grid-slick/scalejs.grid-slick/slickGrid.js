@@ -17,18 +17,31 @@ define([
     Slick,
     observableDataView
 ) {
-    'use strict';
+
 
     /// <param name="ko" value="window.ko" />
-    var isObservable = ko.isObservable;
+    var isObservable = ko.isObservable,
+        merge = core.object.merge,
+        has = core.object.has,
+        toEnumerable = core.linq.enumerable.from,
+        observable = ko.observable,
+        observableArray = ko.observableArray,
+        computed = ko.computed,
+        valueOrDefault = core.object.valueOrDefault;
 
     function slickGrid(element, options) {
         var dataView,
-            grid;
+            grid,
+            sortBy = ko.observable(),
+            internalItemsSource,
+            itemsSource = options.itemsSource,
+            filterableColumns,
+            operations;
 
         function createDataView() {
             //dataView = new Slick.Data.DataView({ inlineFilters: true });
-            dataView = observableDataView(options);
+
+            dataView = observableDataView(merge(options, { itemsSource: internalItemsSource }));
 
             /*jslint unparam: true*/
             dataView.onRowCountChanged.subscribe(function (e, args) {
@@ -55,10 +68,9 @@ define([
             /*jslint unparam: false*/
         }
 
-
         /*jslint unparam: true*/
         function subscribeToOnSort() {
-            if (isObservable(options.sorting)) {
+            if (options.customSort && isObservable(options.sorting)) {
                 grid.onSort.subscribe(function (e, args) {
                     if (args.multiColumnSort) {
                         throw new Error('Multi column sort is not implemented');
@@ -70,22 +82,128 @@ define([
                     options.sorting(sort);
                 });
 
-                options.sorting.subscribe(function (newSort) {
+                function newSorting(newSort) {
                     var sorts = Object.keys(newSort),
                         sort = sorts[0];
 
                     grid.setSortColumn(sort, newSort[sort]);
+                }
+                newSorting(options.sorting());
+                options.sorting.subscribe(newSorting);
+                options.sorting.valueHasMutated();
+            } else if (isObservable(options.sorting)) {
+                grid.onSort.subscribe(function (e, args) {
+                    var sort = args.multiColumnSort ? args.sortCols : [args],
+                        sortOpt = {};
+                    sort.forEach(function (col) {
+                        sortOpt[col.sortCol.field] = col.sortAsc;
+                    });
+                    options.sorting(sortOpt);
+
+                    sortBy(sort);
+                });
+            } else if (options.sorting) {
+                grid.onSort.subscribe(function (e, args) {
+                    sortBy(args.multiColumnSort ?
+                        args.sortCols :
+                        [args]);
                 });
             }
         }
         /*jslint unparam: false*/
 
+        function lower(x) {
+            if (typeof x === "string") {
+                return x.toLowerCase();
+            }
+            return x;
+        }
+
+        function comparer(on) {
+            return function (x) {
+                return has(x, on) ? lower(x[on]) : -Number.MAX_VALUE;
+            };
+        }
+
+        function sortItems(items, args) {
+            var ordered;
+
+            if (!args) {
+                return items;
+            }
+            
+
+            function thenBy(source, a) {
+                return a.sortAsc
+                    ? source.thenBy(comparer(a.sortCol.field))
+                    : source.thenByDescending(comparer(a.sortCol.field));
+            }
+
+            function orderBy(source, a) {
+                return a.sortAsc
+                    ? source.orderBy(comparer(a.sortCol.field))
+                    : source.orderByDescending(comparer(a.sortCol.field));
+            }
+
+            ordered = orderBy(toEnumerable(items), args[0]);
+            ordered = toEnumerable(args)
+                     .skip(1)
+                     .aggregate(ordered, thenBy);
+            grid.setSortColumns(args.map(function(a) { return { columnId: a.sortCol.field, sortAsc: a.sortAsc }; }));
+
+            items = ordered.toArray();
+
+            return items;
+        }
+
+
+
         function createGrid() {
-            var plugins;
+            var plugins,
+                initial;
 
             options.explicitInitialization = true;
             grid = new Slick.Grid(element, dataView, options.columns, options);
             $(element).data('slickgrid', grid);
+
+            if (isObservable(options.update)) {
+                options.update.subscribe(function () {
+                    grid.setColumns(options.columns);
+                });
+            }
+
+            initial = options.columns.filter(function (c) {
+                return c.defaultSort;
+            });
+            if (initial) {
+                var sort = initial.map(function (col) {
+                    return {
+                        sortAsc: col.defaultSort === 'asc',
+                        sortCol: col
+                    };
+                }),
+                    sortOpt = {};
+                if (isObservable(options.sorting)) {
+                    sort.forEach(function (col) {
+                        sortOpt[col.sortCol.field] = col.sortAsc;
+                    });
+                    options.sorting(sortOpt);
+
+                    options.sorting.subscribe(function (sorts) {
+                        sortBy(options.columns.reduce(function (cols, col) {
+                            if (sorts[col.field] !== undefined) {
+                                cols.push({
+                                    sortAsc: sorts[col.field],
+                                    sortCol: col
+                                });
+                            }
+                            return cols;
+                        }, []));
+                    });
+                }
+
+                sortBy(sort);
+            }
 
             grid.setSelectionModel(new Slick.RowSelectionModel());
 
@@ -135,6 +253,7 @@ define([
         }
 
         function subscribeToViewport() {
+            var top;
             if (isObservable(options.viewport)) {
                 grid.onViewportChanged.subscribe(function () {
                     var vp = grid.getViewport();
@@ -142,7 +261,12 @@ define([
                 });
 
                 options.viewport.subscribe(function (vp) {
-                    grid.scrollRowIntoView(vp.top);
+                    // stop stack overflow due to unknown issue with slickgrid
+                    if (vp.top > top + 2 || vp.top < top -2) {
+                        console.log(vp.top);
+                        grid.scrollRowIntoView(vp.top);
+                        top = vp.top;
+                    }
                 });
             }
         }
@@ -157,6 +281,147 @@ define([
                     }
                 });
             }
+        }
+
+        function createFilter() {
+            var evaluateFunc = {
+                EqualTo: function(s, v) { return parseFloat(s) === parseFloat(v) },
+                GreaterThan: function(s, v) { return parseFloat(s) > parseFloat(v) },
+                LessThan: function(s, v) { return parseFloat(s) < parseFloat(v) },
+                NotEqualTo: function (s, v) { return parseFloat(s) !== parseFloat(v) },
+                In: function (s, v) {
+                    s = valueOrDefault(s, "").toString();
+                    return v.contains(s);
+                },
+                Contains: function (s, v) {
+                    s = valueOrDefault(s, "").toString().toLowerCase();
+                    v = valueOrDefault(v, "").toString().toLowerCase();
+                    return s.indexOf(v) !== -1
+                },
+                StartsWith: function (s, v) {
+                    s = valueOrDefault(s, "").toString().toLowerCase();
+                    v = valueOrDefault(v, "").toString().toLowerCase();
+                    return s.indexOf(v) === 0
+                },
+                EndsWith: function (s, v) {
+                    s = valueOrDefault(s, "").toString().toLowerCase();
+                    v = valueOrDefault(v, "").toString().toLowerCase();
+                    return s.indexOf(v, s.length - v.length) !== -1
+                },
+                NotEmpty: function (s) {
+                    return has(s) && s !== ""
+                }
+            }
+
+
+            function evaluateOperation(e, v) {
+                var isValid;
+                evaluate = evaluateFunc[e.op];
+
+                if (e.op === "In" || e.op === "NotEmpty") {
+                    isValid = evaluate(v, e.values);
+                } else {
+                    for (var i = 0; i < e.values.length; i += 1) {
+                        isValid = evaluate(v, valueOrDefault(e.values[i], "").toString());
+                        if (!isValid) break;
+                    }
+                }
+
+                return isValid;
+            }
+
+            filterableColumns.forEach(function (c) {
+                var quickSearch = observable();
+                c.filter = {
+                    type: c.filter.type,
+                    quickFilterOp: c.quickFilterOp,
+                    value: observable(),
+                    quickSearch: quickSearch,
+                    values: observable([])
+                }
+                
+                quickSearch.subscribe(function () {
+                    //gets the initial list values based on current filters
+                    var listValues = options.itemsSource()
+                          .where(function (v) {
+                              var keep = true;
+                              ops = operations.filter(function (o) {
+                                  return o.id !== c.id
+                              });
+
+                              for (var i = 0; i < ops.length; i++) {
+                                  keep = evaluateOperation(ops[i], v[ops[i].id])
+                                  if (!keep) break;
+                              }
+                              return keep;
+                          })
+                        .distinct(function (r) { if (has(r[c.id])) return r[c.id] })                      
+                        .orderBy(comparer(c.id))
+                        .select(function (r) {
+                            return valueOrDefault(r[c.id], "").toString();
+                        });
+
+                    //if quickSearch is undefined then return
+                    if(!has(quickSearch())) {
+                        return;
+                    }
+                    if (quickSearch().values[0]) {
+                        s = quickSearch().values[0].toLowerCase();
+                        listValues = listValues.where(function (v) {
+                            v = v.toLowerCase();
+
+                            if (quickSearch.op === "Contains") {
+                                return v.indexOf(s) !== -1;
+                            }
+                            return v.indexOf(s) === 0
+                        });
+                    }
+                    c.filter.values(listValues.toArray());
+                })
+            });
+            itemsSource = computed(function () {
+                operations = filterableColumns.selectMany(function (c) { return c.filter.value() }, function (c, v) {
+                    return {
+                        id: c.id,
+                        op: v.op,
+                        values: v.values
+                    };
+                }).toArray();
+                if (operations.length > 0) {
+                    var newItems = options.itemsSource().filter(function (v) {
+                        var keep;
+                        for (var i = 0; i < operations.length; i++) {
+                            keep = evaluateOperation(operations[i], v[operations[i].id])
+                            if (!keep) break;
+                        }
+                        return keep;
+                    });
+                    return newItems;
+                }
+                return options.itemsSource();
+            });     
+        }
+
+
+
+        filterableColumns = options.columns.filter(function (c) {
+            return c.filter && !isObservable(c.filter.value);
+        });
+
+        if (filterableColumns.length > 0) {
+            createFilter();
+        }
+
+        if (options.sorting === true || (isObservable(options.sorting) && !options.customSort)) {
+            internalItemsSource = ko.computed(function () {
+                var orderedItems = sortItems(itemsSource(), sortBy());
+                orderedItems.forEach(function (o, i) {
+                    o.index = i;
+                });
+                return orderedItems;
+            });
+        } else {
+            internalItemsSource = itemsSource;
         }
 
         createDataView();

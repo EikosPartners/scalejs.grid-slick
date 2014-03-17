@@ -1,71 +1,94 @@
 ﻿<div id="number_filter_template">
-    <div data-bind="css: { iconArrowLeft: !flipped(), iconArrowRight: flipped }"></div>
-   <div class="numberFilter">
-        SELECT VALUE:
-       <div>QUICK SEARCH: <input data-bind="value: quickSearch, valueUpdate: 'afterkeydown'" /></div>
-       <div class="listFilterBox">
-           <div><input type="checkbox" data-bind="checked: all" />
-               <span>Select All</span>
-           </div>
-           <!-- ko foreach: options -->
-           <div><input type="checkbox" data-bind="checked: selected" />
-               <span data-bind="text: name.toUpperCase()"></span>
-           </div>
-           <!-- /ko -->
-       </div>
-       SHOW ROWS WITH VALUES THAT:
-       <div class="numberFilterBox">
-           <div><select data-bind="value: comparisonA">
-                <option value="=">IS EQUAL TO</option>
-                <option value="<">IS LESS THAN</option>
-                <option value="!=">IS NOT EQUAL TO</option>
-                <option value=">">IS GREATER THAN</option>                
-           </select></div>
-           <input type="text" data-bind="value: valueA, valueUpdate: 'afterkeydown'" />
-           <div>AND</div>
-            <div><select data-bind="value: comparisonB">
-                <option value="=">IS EQUAL TO</option>
-                <option value="<">IS LESS THAN</option>
-                <option value="!=">IS NOT EQUAL TO</option>
-                <option value=">">IS GREATER THAN</option>                
-           </select></div>
-           <input type="text" data-bind="value: valueB, valueUpdate: 'afterkeydown'" />
-       </div>
-   </div> 
-</div>
-
+    <div data-bind="css: { iconArrowLeft: !flipped(), iconArrowRight: flipped }"></div> 
+        <div class="numberFilter">
+            Select Value: 
+               <div>Quick Search: <input data-bind="value: quickSearch, valueUpdate: 'afterkeydown'" /></div> 
+               <div class="listFilterBox">
+                   <div data-bind="visible: loading" style="width:100%;height:200px;background:black;opacity:.2;position:absolute"></div> 
+                    <div>
+                        <input type="checkbox" data-bind="checked: all" /> 
+                        <span>Select All</span> 
+                    </div> 
+                    <!-- ko foreach: options --> 
+                    <div>
+                        <input type="checkbox" data-bind="checked: selected" /> 
+                        <span data-bind="text: value"></span> 
+                    </div> 
+                    <!-- /ko --> 
+               </div> 
+               Show rows with values that: 
+            <div class="numberFilterBox">
+                <div> 
+                <input type="checkbox" data-bind="checked: notEmpty" />
+                <span>Are Not Empty</span> 
+                </div>
+                <div>and</div> 
+                <div>
+                    <select data-bind="value: comparisonA">
+                        <option value="EqualTo">Is Equal To</option> 
+                        <option value="LessThan">Is Less Than</option> 
+                        <option value="NotEqualTo">Is Not Equal To</option> 
+                        <option value="GreaterThan">Is Greater Than</option>         
+                    </select>
+                </div> 
+                <input type="text" data-bind="value: valueA, valueUpdate: 'afterkeydown'" /> 
+                <div>and</div> 
+                <div>
+                    <select data-bind="value: comparisonB">
+                        <option value="EqualTo">Is Equal To</option> 
+                        <option value="LessThan">Is Less Than</option>
+                        <option value="NotEqualTo">Is Not Equal To</option>
+                        <option value="GreaterThan">Is Greater Than</option> 
+                    </select>
+                </div> 
+                <input type="text" data-bind="value: valueB, valueUpdate: 'afterkeydown'" /> 
+            </div> 
+    </div>  
+</div> 
+ 
 <div id="string_filter_template">
-    <div data-bind="css: { iconArrowLeft: !flipped(), iconArrowRight: flipped }"></div>
-   <div class="numberFilter">
-        SELECT VALUE:
-       <div>QUICK SEARCH: <input data-bind="value: quickSearch, valueUpdate: 'afterkeydown'" /></div>
-       <div class="listFilterBox">
-           <div><input type="checkbox" data-bind="checked: all" />
-               <span>Select All</span>
-           </div>
-           <!-- ko foreach: options -->
-           <div><input type="checkbox" data-bind="checked: selected" />
-               <span data-bind="text: name.toUpperCase()"></span>
-           </div>
-           <!-- /ko -->
-       </div>
-       SHOW ROWS WITH VALUES THAT:
-       <div class="numberFilterBox">
-           <div><select data-bind="value: comparisonA">
-                <option value="contains">CONTAINS</option>
-                <option value="starts">STARTS WITH</option>
-                <option value="ends">ENDS WITH</option>             
-           </select></div>
-           <input type="text" data-bind="value: valueA, valueUpdate: 'afterkeydown'" />
-           <div>AND</div>
-            <div><select data-bind="value: comparisonB">
-                <option value="contains">CONTAINS</option>
-                <option value="starts">STARTS WITH</option>
-                <option value="ends">ENDS WITH</option>                
-           </select></div>
-           <input type="text" data-bind="value: valueB, valueUpdate: 'afterkeydown'" />
-       </div>
-   </div> 
-</div>
-
+    <div data-bind="css: { iconArrowLeft: !flipped(), iconArrowRight: flipped }"></div> 
+    <div class="numberFilter">
+        Select Value: 
+        <div>Quick Search:  <input data-bind="value: quickSearch, valueUpdate: \afterkeydown\" /></div> 
+        <div class="listFilterBox">
+            <div data-bind="visible: loading" style="width:100%;height:200px;background:black;opacity:.2;position:absolute"></div> 
+            <div>
+                <input type="checkbox" data-bind="checked: all" /> 
+                <span>Select All</span> 
+            </div> 
+            <!-- ko foreach: options --> 
+            <div>
+                <input type="checkbox" data-bind="checked: selected" /> 
+                <span data-bind="text: value"></span> 
+            </div> 
+            <!-- /ko --> 
+        </div> 
+        Show rows with values that: 
+        <div class="numberFilterBox">
+            <div>
+                <input type="checkbox" data-bind="checked: notEmpty" />
+                <span>Are Not Empty</span> 
+            </div>
+            <div>and</div> 
+            <div>
+                <select data-bind="value: comparisonA">
+                    <option value="Contains">Contains</option> 
+                    <option value="StartsWith">Starts With</option> 
+                    <option value="EndsWith">Ends</option>  
+                </select>
+            </div> 
+            <input type="text" data-bind="value: valueA, valueUpdate: 'afterkeydown'" /> 
+            <div>and</div> 
+            <div>
+                <select data-bind="value: comparisonB">
+                    <option value="Contains">Contains</option> 
+                    <option value="StartsWith">Starts With</option>
+                    <option value="EndsWith">Ends</option>
+                </select>
+            </div> 
+            <input type="text" data-bind="value: valueB, valueUpdate: 'afterkeydown'" />
+        </div> 
+    </div>  
+</div>  
 

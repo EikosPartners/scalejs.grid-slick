@@ -10,6 +10,7 @@ var require = {
         "slick.grid": "empty:",
         "slick.rowselectionmodel": "empty:",
         "bPopup": "empty:",
-        "text": "Scripts/text"
+        "text": "Scripts/text",
+        "scalejs.mvvm": "empty:"
     }
 };
