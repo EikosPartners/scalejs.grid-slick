@@ -281,7 +281,6 @@ define([
         ko.applyBindings(bindings, node);
 
         function sendExpression(expression) {
-            console.log(expression);
             filter(expression || []);
         }
 
