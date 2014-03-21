@@ -405,7 +405,6 @@ define('scalejs.grid-slick/observableFilters',[
         ko.applyBindings(bindings, node);
 
         function sendExpression(expression) {
-            console.log(expression);
             filter(expression || []);
         }
 
@@ -1081,7 +1080,6 @@ define('scalejs.grid-slick/slickGrid',[
                 options.viewport.subscribe(function (vp) {
                     // stop stack overflow due to unknown issue with slickgrid
                     if (vp.top > top + 2 || vp.top < top -2) {
-                        console.log(vp.top);
                         grid.scrollRowIntoView(vp.top);
                         top = vp.top;
                     }
