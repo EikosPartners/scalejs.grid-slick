@@ -10,7 +10,7 @@ define([
     Slick
 ) {
     /// <param name="ko" value="window.ko" />
-
+    "use strict";
 
 
     var isObservable = ko.isObservable,
@@ -56,8 +56,10 @@ define([
                         var newItems = opts.itemsSource() || [],
                             newCount = newItems.length;
 
-                        onRowCountChanged.notify({ previous: oldCount, current: newCount }, null, null);
-                        oldCount = newCount;
+                        if (newCount !== oldCount) {
+                            onRowCountChanged.notify({ previous: oldCount, current: newCount }, null, null);
+                            oldCount = newCount;
+                        }
                     }
                 });
             }

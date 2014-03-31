@@ -18,24 +18,24 @@ define([
     /// <param name="ko" value="window.ko" />
 
     var statechart = core.state.builder.statechart,
-        state = core.state.builder.state,
-        parallel = core.state.builder.parallel,
-        on = core.state.builder.on,
-        whenIn = core.state.builder.whenInStates,
-        onEntry = core.state.builder.onEntry,
-        onExit = core.state.builder.onExit,
-        goto = core.state.builder.goto,
-        gotoInternally = core.state.builder.gotoInternally,
-        observable = ko.observable,
-        computed = ko.computed,
-        observableArray = ko.observableArray,
-        unwrap = ko.utils.unwrapObservable,
-        registerTemplates = core.mvvm.registerTemplates,
-        has = core.object.has;
+          state = core.state.builder.state,
+          parallel = core.state.builder.parallel,
+          on = core.state.builder.on,
+          whenIn = core.state.builder.whenInStates,
+          onEntry = core.state.builder.onEntry,
+          onExit = core.state.builder.onExit,
+          goto = core.state.builder.goto,
+          gotoInternally = core.state.builder.gotoInternally,
+          observable = ko.observable,
+          computed = ko.computed,
+          observableArray = ko.observableArray,
+          unwrap = ko.utils.unwrapObservable,
+          registerTemplates = core.mvvm.registerTemplates,
+          has = core.object.has;
 
     registerTemplates(filterTemplates);
 
-    function setupFilter(fieldFilter, $node, node, column) {
+    function setupFilter(fieldFilter, column) {
         var filter = observable([]),
             quickSearch = observable(), //fieldFilter.quickSearch || observable(),
             quickOp = fieldFilter.quickFilterOp || "StartsWith",
@@ -111,6 +111,9 @@ define([
                 comps = fieldFilter.type === "string" ? ["Contains", "StartsWith", "EndsWith"] : ["EqualTo", "LessThan", "NotEqualTo", "GreaterThan"],
                 val;
 
+            // all, list, or val
+
+            /*
             // If no "In" operation, then check all:
             if (v) {
                 if (value.indexOf("In") === -1) {
@@ -118,7 +121,7 @@ define([
                 }
             } else {
                 checkAll();
-            }
+            }*/
 
             // Set NotEmpty to false if not in list:
             if (value.indexOf("NotEmpty") === -1) {
@@ -176,9 +179,9 @@ define([
         subscription.filter = filter.subscribe(updateFieldFilter);
 
         //converts a list item to a selectable list item
-        function option(value) {
+        function option(value, selected) {
             return {
-                selected: observable(allCheckbox()),
+                selected: observable(has(selected) ? selected : allCheckbox()),
                 value: has(value) ? value.toString() : ""
             };
         }
@@ -186,9 +189,18 @@ define([
         //converts new listItems to selectableListItems
         listItems.subscribe(function (newItems) {
             //item selection persists when the list items are changed
-            var items = newItems.groupJoin(selectableListItems(), "$.toString()", "$.value", function (o, i) {
-                return i.elementAtOrDefault(0, option(o));
-            }).toArray();
+            var filterValues = filter().length === 1 && filter()[0].op === 'In' ? filter()[0].values : [],
+                items;
+
+            if (filterValues.length > 0) {
+                items = newItems.map(function (item) {
+                    return option(item, filterValues.indexOf(item.toString()) > -1);
+                });
+            } else {
+                items = newItems.groupJoin(selectableListItems(), "$.toString()", "$.value", function (o, i) {
+                    return i.elementAtOrDefault(0, option(o));
+                }).toArray();
+            }
 
             selectableListItems(items);
         });
@@ -234,10 +246,18 @@ define([
                     op: 'In',
                     values: list.map(function (v) { return v.value })
                 }];
+            } else {
+                return undefined;
             }
         });
 
         quickExpression = computed(function () {
+            if (quickFilter()) {
+                return [{
+                    op: quickOp,
+                    values: [quickFilter()]
+                }];
+            }
             //When all checkbox is true, quickSearch behaves like Quick Filter
             //when filter is closed quickSearch becomes undefined
             if (allCheckbox() && quickSearch()) {
@@ -247,14 +267,7 @@ define([
                 }];
             }
 
-            if (!quickFilter()) {
-                return [];
-            }
-
-            return [{
-                op: quickOp,
-                values: [quickFilter()]
-            }];
+            return [];
         });
 
 
@@ -278,7 +291,6 @@ define([
             loading: loading
         };
 
-        ko.applyBindings(bindings, node);
 
         function sendExpression(expression) {
             filter(expression || []);
@@ -310,7 +322,7 @@ define([
             notEmpty(false);
         }
 
-        function initializeFilter() {
+        function initializeFilter($node) {
             //using jQuery instead of knockout because bindings have already been applied to the filter,
             //however we need to add a click event to the filter button so that when it is clicked
             //'filter.shown' state is entered.
@@ -363,55 +375,69 @@ define([
         */
 
         function createStatechart() {
+
             return statechart(
                 parallel('filter',
                 onEntry(function () {
                     send = this.send;
-                    initializeFilter();
+                    this.initial = true;
                 }),
                 state('filter.view',
-                state('filter.hidden',
-                        onEntry(function (e, isIn) {
-                            var stateProp = this;
-                            this.quickSearchSub = quickSearch.subscribe(function (v) {
-                                quickFilter(v);
-                            });
+                    state('filter.hidden',
+                            onEntry(function (e, isIn) {
+                                var stateProp = this,
+                                    sub;
 
-                            this.quickSub = quickFilter.subscribe(function (v) {
-                                // Prevent circular dependency by disposing quickSearch subscription:
-                                stateProp.quickSearchSub.dispose();
-                                // Update quickSearch:
-                                quickSearch(v);
-                                // Resubscribe to quickSearch:
-                                stateProp.quickSearchSub = quickSearch.subscribe(function (v) {
+                                subscription.quickSearchSub = quickSearch.subscribe(function (v) {
                                     quickFilter(v);
                                 });
-                                if (!isIn('filter.model.all')) {
-                                    send('filter.all');
+
+                                subscription.quickSub = quickFilter.subscribe(function (v) {
+                                    // Prevent circular dependency by disposing quickSearch subscription:
+                                    subscription.quickSearchSub.dispose();
+                                    // Update quickSearch:
+                                    quickSearch(v);
+                                    // Resubscribe to quickSearch:
+                                    subscription.quickSearchSub = quickSearch.subscribe(function (v) {
+                                        quickFilter(v);
+                                    });
+                                    if (!isIn('filter.model.all')) {
+                                        send('filter.all');
+                                    }
+                                });
+
+                                if (this.initial) {
+                                    updateFilter(fieldFilter.value());
+                                    updateQuickSearch(fieldFilter.quickSearch());
+                                    this.initial = false;
                                 }
-                            });
-
-                            updateFilter(fieldFilter.value());
-                            updateQuickSearch(fieldFilter.quickSearch());
+                            }),
+                        onExit(function () {
+                            subscription.quickSearchSub.dispose();
+                            subscription.quickSub.dispose();
                         }),
-                    onExit(function () {
-                        this.quickSearchSub.dispose();
-                        this.quickSub.dispose();
-                    }),
-                        on('filter.open', goto('filter.shown'))
-                    ),
-                state('filter.shown',
-                       onEntry(function () {
-                           //move open logic here
+                            on('filter.open', goto('filter.shown'))
+                        ),
+                    state('filter.shown',
+                           onEntry(function () {
+                               //move open logic here
 
-                           // Initialize list:
-                           quickSearch.valueHasMutated();
-                       }),
-                        on('filter.close', goto('filter.hidden')))
+                               // Initialize list:
+                               quickSearch.valueHasMutated();
+                           }),
+                            on('filter.close', goto('filter.hidden')))
                 ),
                 state('filter.model',
-                    state('filter.model.all',
+                /*
+                    state('filer.model.initial', 
                         onEntry(function () {
+                            // 1. move updateFilter, updateQuickSearch here
+                            // 2. do dispatch
+                            send('filter.lis', { internal: true });
+
+                        })),*/
+                    state('filter.model.all',
+                        onEntry(function (e) {
                             //update ui
                             checkAll();
                             clearValue();
@@ -420,7 +446,11 @@ define([
 
                             subscription.list = listExpression.subscribe(function (expression) {
                                 if (expression) {
+                                    //if there is an expression, go to list
                                     send('filter.list');
+                                } else if (getSelectedItems().length === 0) {
+                                    //if there are selected items and no expression, go to value
+                                    send('filter.value');
                                 }
                             });
                             subscription.value = valExpression.subscribe(function () {
@@ -452,8 +482,8 @@ define([
                                 });
                                 subscription.quick = quickSearch.subscribe(function (v) {
                                     if (v !== undefined) {
-                                        sendExpression(quickExpression());
                                         quickFilter(quickSearch());
+                                        sendExpression(quickExpression());
                                     }
                                 });
                             }),
@@ -473,9 +503,14 @@ define([
                             sendExpression(listExpression());
 
                             subscription.list = listExpression.subscribe(function (expression) {
-                                if (getSelectedItems().length === 0 || expression) {
+                                if (expression) {
+                                    // if there is an expression, send it
                                     sendExpression(expression);
+                                } else if (getSelectedItems().length === 0) {
+                                    // if its empty, go to value
+                                    send('filter.value');
                                 } else {
+                                    // else, all are selected
                                     send('filter.all');
                                 }
                             });
@@ -508,9 +543,13 @@ define([
 
                                 sendExpression(valExpression());
 
-                                subscription.list = listExpression.subscribe(function (v) {
-                                    if (v) {
+                                subscription.list = listExpression.subscribe(function (expression) {
+                                    if (expression) {
+                                        // if there is an expression, go to list
                                         send('filter.list');
+                                    } else if (getSelectedItems().length > 0) {
+                                        // if there are items, go to all
+                                        send('filter.all');
                                     }
                                 });
                                 subscription.value = valExpression.subscribe(function (expression) {
@@ -542,7 +581,17 @@ define([
 
         filterStatechart = createStatechart();
 
-        filterStatechart.start();
+        var initalized = false;
+        function start() {
+            filterStatechart.start();
+        }
+
+        return {
+            bindings: bindings,
+            start: start,
+            initalized: initalized,
+            init: initializeFilter
+        }
     }
 
     /*jslint unparam: true*/
@@ -556,14 +605,21 @@ define([
                     + '<div class="slick-filter" data-bind="css: { iconFilterOff: !filterOn(), iconFilterOn: filterOn }"></div>';
 
                 if (fieldFilter) {
+                    if (!fieldFilter.state) {
+                        fieldFilter.state = setupFilter(fieldFilter, args.column)
+                    }
                     $node.html(filterHtml);
-                    setupFilter(fieldFilter, $node, node, args.column);
+                    ko.applyBindings(fieldFilter.state.bindings, node);
+                    fieldFilter.state.init($node);
+                    if (!fieldFilter.state.initalized) {
+                        fieldFilter.state.start();
+                        fieldFilter.state.initialized = true;
+                    }
                 }
             });
         }
 
         function destroy() {
-
         }
 
         return {

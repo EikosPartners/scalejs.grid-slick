@@ -271,7 +271,7 @@ define([
         }
 
         function subscribeToLayout() {
-            if (core.layout.onLayoutDone) {
+            if (core.layout && core.layout.onLayoutDone) {
                 core.layout.onLayoutDone(function () {
                     grid.resizeCanvas();
                     if (isObservable(options.viewport)) {
@@ -360,10 +360,6 @@ define([
                             return valueOrDefault(r[c.id], "").toString();
                         });
 
-                    //if quickSearch is undefined then return
-                    if(!has(quickSearch())) {
-                        return;
-                    }
                     if (quickSearch().values[0]) {
                         s = quickSearch().values[0].toLowerCase();
                         listValues = listValues.where(function (v) {
