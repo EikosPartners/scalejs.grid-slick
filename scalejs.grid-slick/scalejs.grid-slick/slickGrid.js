@@ -21,6 +21,9 @@ define([
 
     /// <param name="ko" value="window.ko" />
     var isObservable = ko.isObservable,
+        isObservableArray = function (ob) {
+            return isObservable(ob) && ob.indexOf;
+        },
         merge = core.object.merge,
         has = core.object.has,
         toEnumerable = core.linq.enumerable.from,
@@ -238,7 +241,19 @@ define([
         }
 
         function subscribeToSelection() {
-            if (isObservable(options.selectedItem)) {
+            if (isObservableArray(options.selectedItem)) {
+                /*jslint unparam:true*/
+                grid.getSelectionModel().onSelectedRangesChanged.subscribe(function (ranges) {
+                    var items = [];
+
+                    grid.getSelectedRows().forEach(function (row) {
+                        items.push(grid.getDataItem(row));
+                    });
+
+                    options.selectedItem(items);
+                });
+                /*jslint unparam:false*/
+            } else if (isObservable(options.selectedItem)) {
                 /*jslint unparam:true*/
                 grid.getSelectionModel().onSelectedRangesChanged.subscribe(function (ranges) {
                     var rows, item;
