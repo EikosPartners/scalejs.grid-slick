@@ -345,15 +345,16 @@ define([
             }
 
             filterableColumns.forEach(function (c) {
-                var quickSearch = observable();
+                var quickSearch = observable(''),
+                    quickFilterOp = c.filter.quickFilterOp;
                 c.filter = {
                     type: c.filter.type,
-                    quickFilterOp: c.quickFilterOp,
+                    quickFilterOp: quickFilterOp,
                     value: observable(),
                     quickSearch: quickSearch,
                     values: observable([])
                 }
-                
+
                 quickSearch.subscribe(function () {
                     //gets the initial list values based on current filters
                     var listValues = options.itemsSource()
@@ -369,7 +370,7 @@ define([
                               }
                               return keep;
                           })
-                        .distinct(function (r) { if (has(r[c.id])) return r[c.id] })                      
+                        .distinct(function (r) { if (has(r[c.id])) return r[c.id] })
                         .orderBy(comparer(c.id))
                         .select(function (r) {
                             return valueOrDefault(r[c.id], "").toString();
@@ -380,13 +381,13 @@ define([
                         listValues = listValues.where(function (v) {
                             v = v.toLowerCase();
 
-                            if (quickSearch.op === "Contains") {
+                            if (quickFilterOp === "Contains") {
                                 return v.indexOf(s) !== -1;
                             }
                             return v.indexOf(s) === 0
                         });
                     }
-                    c.filter.values(listValues.toArray());
+                    c.filter.values(listValues.take(50).toArray());
                 })
             });
             itemsSource = computed(function () {
@@ -406,10 +407,13 @@ define([
                         }
                         return keep;
                     });
-                    return newItems;
+                    return options.sorting ? newItems : newItems.map(function (e, i) {
+                        e.index = i;
+                        return e;
+                    });
                 }
                 return options.itemsSource();
-            });     
+            });
         }
 
 
