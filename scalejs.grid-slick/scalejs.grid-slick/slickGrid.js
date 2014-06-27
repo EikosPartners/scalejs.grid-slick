@@ -7,7 +7,10 @@ define([
     'jQuery',
     'slick.grid',
     './observableDataview',
-    './observableFilters',
+    './filters/observableFilters',
+    './filters/defaultFilters',
+    './sorting/observableSorting',
+    './sorting/defaultSorting',
     './changesFlasher'
 ], function (
     core,
@@ -15,11 +18,17 @@ define([
     ko,
     $,
     Slick,
-    observableDataView
+    observableDataView,
+    observableFilters,
+    defaultFilters,
+    observableSorting,
+    defaultSorting,
+    changesFlasher
 ) {
 
 
     /// <param name="ko" value="window.ko" />
+/// <reference path="_slickgrid.js" />
     var isObservable = ko.isObservable,
         isObservableArray = function (ob) {
             return isObservable(ob) && ob.indexOf;
@@ -33,13 +42,80 @@ define([
         valueOrDefault = core.object.valueOrDefault;
 
     function slickGrid(element, options) {
-        var dataView,
-            grid,
-            sortBy = ko.observable(),
+        var columns = ko.unwrap(options.columns),
             internalItemsSource,
-            itemsSource = options.itemsSource,
-            filterableColumns,
-            operations;
+            dataView,
+            grid,
+            plugins = [];
+
+
+        function setupFilters(itemsSource) {
+            var filterableColumns = columns.filter(function (c) { return c.filter; }),
+                filteredItemsSource;
+
+            // if there are no filterable columns, no need to set up filters
+            if (filterableColumns.length === 0) return itemsSource;
+
+            // if any filter doesnt have a value, we need to make it
+            if (filterableColumns.some(function (c) { return !c.filter.value })) {
+                filteredItemsSource = defaultFilters(filterableColumns, itemsSource);
+            } else {
+                filteredItemsSource = itemsSource;
+            }
+
+            // add the filters to the plugins to be initialized later
+            plugins.push(observableFilters());
+
+            return filteredItemsSource;
+        }
+
+        function setupSorting(itemsSource) {
+            var sorting = options.sorting,
+                sortableColumns = columns.filter(function (c) { return c.sortable; }),
+                sortedItemsSource
+
+            // if sorting is undefined, we dont need to set up sorting
+            if (sorting === undefined) return itemsSource;
+
+            // if custom sort is enabled, we don't need to make our own sortedItemsSource
+            if (options.customSort) {
+                sortedItemsSource = itemsSource;
+            } else {
+                sorting = isObservable(options.sorting) ? options.sorting : observable();
+                sortedItemsSource = defaultSorting(sorting, sortableColumns, itemsSource);
+            }
+
+            // add the sorting to the plugins to be initialized later
+            plugins.push(observableSorting(sorting));
+
+            return sortedItemsSource;
+        }
+
+        function setupIndex(itemsSource) {
+            var indexedItemsSource;
+            
+            // if virtual scrolling is not enabled, set the items' index
+            if (!options.itemsCount) {
+                indexedItemsSource = ko.computed(function () {
+                    return itemsSource().map(function (item, index) {
+                        item.index = index;
+                        return item;
+                    });
+                });
+            } else {
+                indexedItemsSource = itemsSource;
+            }
+
+            return indexedItemsSource;
+        }
+
+        // when default filtering/sorting/vitualization is enabled, we need to create our own items source
+        function createInternalItemsSource() {
+            internalItemsSource = options.itemsSource;
+            internalItemsSource = setupSorting(internalItemsSource);
+            internalItemsSource = setupFilters(internalItemsSource);
+            internalItemsSource = setupIndex(internalItemsSource);
+        }
 
         function createDataView() {
             //dataView = new Slick.Data.DataView({ inlineFilters: true });
@@ -71,171 +147,29 @@ define([
             /*jslint unparam: false*/
         }
 
-        /*jslint unparam: true*/
-        function subscribeToOnSort() {
-            if (options.customSort && isObservable(options.sorting)) {
-                grid.onSort.subscribe(function (e, args) {
-                    if (args.multiColumnSort) {
-                        throw new Error('Multi column sort is not implemented');
-                    }
-
-                    var sort = {};
-                    sort[args.sortCol.field] = args.sortAsc;
-
-                    options.sorting(sort);
-                });
-
-                function newSorting(newSort) {
-                    var sorts = Object.keys(newSort),
-                        sort = sorts[0];
-
-                    grid.setSortColumn(sort, newSort[sort]);
-                }
-                newSorting(options.sorting());
-                options.sorting.subscribe(newSorting);
-                options.sorting.valueHasMutated();
-            } else if (isObservable(options.sorting)) {
-                grid.onSort.subscribe(function (e, args) {
-                    var sort = args.multiColumnSort ? args.sortCols : [args],
-                        sortOpt = {};
-                    sort.forEach(function (col) {
-                        sortOpt[col.sortCol.field] = col.sortAsc;
-                    });
-                    options.sorting(sortOpt);
-
-                    sortBy(sort);
-                });
-            } else if (options.sorting) {
-                grid.onSort.subscribe(function (e, args) {
-                    sortBy(args.multiColumnSort ?
-                        args.sortCols :
-                        [args]);
-                });
-            }
-        }
-        /*jslint unparam: false*/
-
-        function lower(x) {
-            if (typeof x === "string") {
-                return x.toLowerCase();
-            }
-            return x;
-        }
-
-        function comparer(on) {
-            return function (x) {
-                return has(x, on) ? lower(x[on]) : -Number.MAX_VALUE;
-            };
-        }
-
-        function sortItems(items, args) {
-            var ordered;
-
-            if (!args) {
-                return items;
-            }
-            
-
-            function thenBy(source, a) {
-                return a.sortAsc
-                    ? source.thenBy(comparer(a.sortCol.field))
-                    : source.thenByDescending(comparer(a.sortCol.field));
-            }
-
-            function orderBy(source, a) {
-                return a.sortAsc
-                    ? source.orderBy(comparer(a.sortCol.field))
-                    : source.orderByDescending(comparer(a.sortCol.field));
-            }
-
-            ordered = orderBy(toEnumerable(items), args[0]);
-            ordered = toEnumerable(args)
-                     .skip(1)
-                     .aggregate(ordered, thenBy);
-            grid.setSortColumns(args.map(function(a) { return { columnId: a.sortCol.field, sortAsc: a.sortAsc }; }));
-
-            items = ordered.toArray();
-
-            return items;
-        }
-
-
-
         function createGrid() {
-            var plugins,
-                initial;
-
             options.explicitInitialization = true;
-            grid = new Slick.Grid(element, dataView, options.columns, options);
+            grid = new Slick.Grid(element, dataView, columns, options);
             $(element).data('slickgrid', grid);
-
-            if (isObservable(options.update)) {
-                options.update.subscribe(function () {
-                    grid.setColumns(options.columns);
-                });
-            }
-
-            initial = options.columns.filter(function (c) {
-                return c.defaultSort;
-            });
-            if (initial) {
-                var sort = initial.map(function (col) {
-                    return {
-                        sortAsc: col.defaultSort === 'asc',
-                        sortCol: col
-                    };
-                }),
-                    sortOpt = {};
-                if (isObservable(options.sorting)) {
-                    sort.forEach(function (col) {
-                        sortOpt[col.sortCol.field] = col.sortAsc;
-                    });
-                    options.sorting(sortOpt);
-
-                    options.sorting.subscribe(function (sorts) {
-                        sortBy(options.columns.reduce(function (cols, col) {
-                            if (sorts[col.field] !== undefined) {
-                                cols.push({
-                                    sortAsc: sorts[col.field],
-                                    sortCol: col
-                                });
-                            }
-                            return cols;
-                        }, []));
-                    });
-                }
-
-                sortBy(sort);
-            }
 
             grid.setSelectionModel(new Slick.RowSelectionModel());
 
-            if (options.plugins) {
-                plugins = Object.keys(options.plugins).map(function (p) {
-                    // if one of the included plugins then prefix with ./ 
-                    return [
-                        'observableFilters',
-                        'changesFlasher'
-                    ].indexOf(p) >= 0 ? './' + p : p;
-                });
+            plugins.forEach(function (p) { p.init(grid); });
 
-                require(plugins, function () {
-                    var i,
-                        plugin,
-                        createPlugin;
-                    for (i = 0; i < arguments.length; i += 1) {
-                        createPlugin = arguments[i];
-                        plugin = createPlugin(options.plugins[createPlugin.name]);
+            if (isObservable(options.columns)) { 
+                    options.columns.subscribe(function () { 
+                    columns = ko.unwrap(options.columns); 
+                    grid.setColumns(columns); 
+                }); 
+            } 
 
-                        grid.registerPlugin(plugin);
-                    }
-                    grid.init();
-                });
-            } else {
-                grid.init();
+            if (options.changesFlasher) {
+                changesFlasher(grid, options.changesFlasher)
             }
-        }
 
+            grid.init();
+        }
+       
         function subscribeToDataView() {
             dataView.subscribe();
         }
@@ -297,153 +231,12 @@ define([
             }
         }
 
-        function createFilter() {
-            var evaluateFunc = {
-                EqualTo: function(s, v) { return parseFloat(s) === parseFloat(v) },
-                GreaterThan: function(s, v) { return parseFloat(s) > parseFloat(v) },
-                LessThan: function(s, v) { return parseFloat(s) < parseFloat(v) },
-                NotEqualTo: function (s, v) { return parseFloat(s) !== parseFloat(v) },
-                In: function (s, v) {
-                    s = valueOrDefault(s, "").toString();
-                    return v.contains(s);
-                },
-                Contains: function (s, v) {
-                    s = valueOrDefault(s, "").toString().toLowerCase();
-                    v = valueOrDefault(v, "").toString().toLowerCase();
-                    return s.indexOf(v) !== -1
-                },
-                StartsWith: function (s, v) {
-                    s = valueOrDefault(s, "").toString().toLowerCase();
-                    v = valueOrDefault(v, "").toString().toLowerCase();
-                    return s.indexOf(v) === 0
-                },
-                EndsWith: function (s, v) {
-                    s = valueOrDefault(s, "").toString().toLowerCase();
-                    v = valueOrDefault(v, "").toString().toLowerCase();
-                    return s.indexOf(v, s.length - v.length) !== -1
-                },
-                NotEmpty: function (s) {
-                    return has(s) && s !== ""
-                }
-            }
-
-
-            function evaluateOperation(e, v) {
-                var isValid;
-                evaluate = evaluateFunc[e.op];
-
-                if (e.op === "In" || e.op === "NotEmpty") {
-                    isValid = evaluate(v, e.values);
-                } else {
-                    for (var i = 0; i < e.values.length; i += 1) {
-                        isValid = evaluate(v, valueOrDefault(e.values[i], "").toString());
-                        if (!isValid) break;
-                    }
-                }
-
-                return isValid;
-            }
-
-            filterableColumns.forEach(function (c) {
-                var quickSearch = observable(''),
-                    quickFilterOp = c.filter.quickFilterOp;
-                c.filter = {
-                    type: c.filter.type,
-                    quickFilterOp: quickFilterOp,
-                    value: observable(),
-                    quickSearch: quickSearch,
-                    values: observable([])
-                }
-
-                quickSearch.subscribe(function () {
-                    //gets the initial list values based on current filters
-                    var listValues = options.itemsSource()
-                          .where(function (v) {
-                              var keep = true;
-                              ops = operations.filter(function (o) {
-                                  return o.id !== c.id
-                              });
-
-                              for (var i = 0; i < ops.length; i++) {
-                                  keep = evaluateOperation(ops[i], v[ops[i].id])
-                                  if (!keep) break;
-                              }
-                              return keep;
-                          })
-                        .distinct(function (r) { if (has(r[c.id])) return r[c.id] })
-                        .orderBy(comparer(c.id))
-                        .select(function (r) {
-                            return valueOrDefault(r[c.id], "").toString();
-                        });
-
-                    if (quickSearch().values[0]) {
-                        s = quickSearch().values[0].toLowerCase();
-                        listValues = listValues.where(function (v) {
-                            v = v.toLowerCase();
-
-                            if (quickFilterOp === "Contains") {
-                                return v.indexOf(s) !== -1;
-                            }
-                            return v.indexOf(s) === 0
-                        });
-                    }
-                    c.filter.values(listValues.take(50).toArray());
-                })
-            });
-            itemsSource = computed(function () {
-                operations = filterableColumns.selectMany(function (c) { return c.filter.value() }, function (c, v) {
-                    return {
-                        id: c.id,
-                        op: v.op,
-                        values: v.values
-                    };
-                }).toArray();
-                if (operations.length > 0) {
-                    var newItems = options.itemsSource().filter(function (v) {
-                        var keep;
-                        for (var i = 0; i < operations.length; i++) {
-                            keep = evaluateOperation(operations[i], v[operations[i].id])
-                            if (!keep) break;
-                        }
-                        return keep;
-                    });
-                    return options.sorting ? newItems : newItems.map(function (e, i) {
-                        e.index = i;
-                        return e;
-                    });
-                }
-                return options.itemsSource();
-            });
-        }
-
-
-
-        filterableColumns = options.columns.filter(function (c) {
-            return c.filter && !isObservable(c.filter.value);
-        });
-
-        if (filterableColumns.length > 0) {
-            createFilter();
-        }
-
-        if (options.sorting === true || (isObservable(options.sorting) && !options.customSort)) {
-            internalItemsSource = ko.computed(function () {
-                var orderedItems = sortItems(itemsSource(), sortBy());
-                orderedItems.forEach(function (o, i) {
-                    o.index = i;
-                });
-                return orderedItems;
-            });
-        } else {
-            internalItemsSource = itemsSource;
-        }
-
+        createInternalItemsSource();
         createDataView();
         createGrid();
 
         subscribeToDataView();
         subscribeToSelection();
-        subscribeToOnSort();
         subscribeToViewport();
         subscribeToLayout();
     }

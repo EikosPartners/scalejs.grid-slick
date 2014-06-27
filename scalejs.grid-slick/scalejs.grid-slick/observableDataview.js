@@ -1,11 +1,11 @@
 /*global define*/
 /// <reference path="../Scripts/_references.js" />
 define([
-    //'scalejs!core',
+    'scalejs!core',
     'knockout',
     'slick.grid'
 ], function (
-    //core, 
+    core, 
     ko,
     Slick
 ) {
@@ -14,7 +14,8 @@ define([
 
 
     var isObservable = ko.isObservable,
-        computed = ko.computed;
+        computed = ko.computed,
+        has = core.object.has;
 
     return function (opts) {
         var onRowCountChanged = new Slick.Event(),
@@ -74,6 +75,7 @@ define([
                         newIndexes,
                         deletedIndexes;
 
+                    newItems = newItems.filter(function (item) { return has(item); });
                     oldIndexes = Object.keys(items).map(function (key) { return parseInt(key, 10); });
                     newIndexes = newItems.map(function (newItem) { return newItem.index; });
 

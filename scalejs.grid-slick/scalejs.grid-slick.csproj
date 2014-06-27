@@ -20,9 +20,12 @@
     </Content>
     <Content Include="scalejs.grid-slick.js" />
     <Content Include="scalejs.grid-slick\changesFlasher.js" />
-    <Content Include="scalejs.grid-slick\filters.html" />
-    <Content Include="scalejs.grid-slick\observableFilters.js" />
+    <Content Include="scalejs.grid-slick\filters\filters.html" />
+    <Content Include="scalejs.grid-slick\filters\observableFilters.js" />
     <Content Include="scalejs.grid-slick\observableDataview.js" />
+    <Content Include="scalejs.grid-slick\sorting\defaultSorting.js" />
+    <Content Include="scalejs.grid-slick\sorting\observableSorting.js" />
+    <Content Include="scalejs.grid-slick\_slickGrid.js" />
     <Content Include="scalejs.grid-slick\slickGrid.js" />
     <Content Include="Scripts\almond.js" />
     <Content Include="Scripts\jquery-1.9.1.intellisense.js" />
@@ -57,6 +60,9 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="Scripts\jquery-1.9.1.min.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="scalejs.grid-slick\filters\defaultFilters.js" />
   </ItemGroup>
   <PropertyGroup>
     <ScalejsProjectType>Extension</ScalejsProjectType>
