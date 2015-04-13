@@ -1,0 +1,32 @@
+{
+  "name": "scalejs.statechart-scion",
+  "homepage": "https://github.com/lisovin/scalejs.statechart-scion",
+  "authors": [],
+  "description": "",
+  "main": [
+    "dist/scalejs.statechart-scion.min.js"
+  ],
+  "ignore": [
+    "*",
+    "!dist/*.js"
+  ],
+  "dependencies": {
+    "scalejs": "lisovin/scalejs",
+    "scalejs.functional": "lisovin/scalejs.functional",
+    "scalejs.linq-linqjs": "lisovin/scalejs.linq-linqjs",
+    "scion-ng": "lisovin/scion-ng"
+  },
+  "devDependencies": {
+    "requirejs": "latest"
+  },
+  "_release": "c668a6a4af",
+  "_resolution": {
+    "type": "branch",
+    "branch": "dev",
+    "commit": "c668a6a4af4d99fd7470a70bcd702d75e7eff40c"
+  },
+  "_source": "git://github.com/lisovin/scalejs.statechart-scion.git",
+  "_target": "dev",
+  "_originalSource": "lisovin/scalejs.statechart-scion",
+  "_direct": true
+}

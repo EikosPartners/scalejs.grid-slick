@@ -1,0 +1,36 @@
+{
+  "name": "scalejs.functional",
+  "version": "0.4.0",
+  "homepage": "https://github.com/lisovin/scalejs.functional",
+  "authors": [
+    "Peter Lisovin <peter@lisovin.com>"
+  ],
+  "description": "Functional programming extension for scalable JavaScript application",
+  "dependencies": {
+    "scalejs": "lisovin/scalejs",
+    "requirejs": "~2.1.15"
+  },
+  "main": [
+    "dist/scalejs.functional.min.js"
+  ],
+  "ignore": [
+    "*",
+    "!dist/**/*"
+  ],
+  "keywords": [
+    "javascript",
+    "scalejs",
+    "functional",
+    "monad"
+  ],
+  "license": "MIT",
+  "_release": "0.4.0",
+  "_resolution": {
+    "type": "version",
+    "tag": "0.4.0",
+    "commit": "8baa82a856eac409de28c7b2b655d50ae1ba77ca"
+  },
+  "_source": "git://github.com/lisovin/scalejs.functional.git",
+  "_target": "*",
+  "_originalSource": "lisovin/scalejs.functional"
+}
