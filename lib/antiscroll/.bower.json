@@ -1,0 +1,13 @@
+{
+  "name": "antiscroll",
+  "homepage": "https://github.com/bcherny/antiscroll",
+  "_release": "c75e28b496",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "c75e28b49657c921544c6b00a75ccdc0d6abbe74"
+  },
+  "_source": "git://github.com/bcherny/antiscroll.git",
+  "_target": "*",
+  "_originalSource": "bcherny/antiscroll"
+}
