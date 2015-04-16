@@ -1,11 +1,13 @@
 {
   "name": "scalejs.grid-slick",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "homepage": "",
   "authors": [],
   "description": "",
   "main": [
-    "lib/slick.core.js"
+    "lib/slick.core.js",
+    "lib/slick.grid.js",
+    "lib/slick.dataview.js"
 
   ],
   "ignore": [
