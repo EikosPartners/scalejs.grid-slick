@@ -1,22 +1,20 @@
 {
   "name": "scalejs.grid-slick",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "homepage": "",
   "authors": [],
   "description": "",
   "main": [
-    "dist/scalejs.grid-slick.min.js"
+    "lib/slick.core.js"
+
   ],
   "ignore": [
-    "*",
-    "!dist/*.js"
   ],
   "dependencies": {
     "scalejs": "lisovin/scalejs#~0.4.0",
     "jquery": "~2.1.3",
     "knockout": "~3.3.0",
     "bpopup": "~0.11.0",
-    "slickgrid": "~2.1.0",
     "scalejs.mvvm": "lisovin/scalejs.mvvm#dev",
     "scalejs.statechart-scion": "lisovin/scalejs.statechart-scion#dev"
   },
