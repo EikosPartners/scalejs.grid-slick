@@ -1,6 +1,6 @@
 {
   "name": "scalejs.grid-slick",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "homepage": "",
   "authors": [],
   "description": "",
@@ -10,8 +10,8 @@
     "slickgrid/slick.grid.js",
     "slickgrid/slick.dataview.js",
     "slickgrid/slick.editors.js",
-    "slickgrid/formatters.js",
-    "slickgrid/rowselectionmodel.js",
+    "slickgrid/slick.formatters.js",
+    "slickgrid/slick.rowselectionmodel.js",
     "slickgrid/jquery.event.drag.js"
   ],
   "ignore": [
