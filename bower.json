@@ -6,9 +6,9 @@
   "description": "",
   "main": [
     "dist/scalejs.grid-slick.js",
-    "lib/slick.core.js",
-    "lib/slick.grid.js",
-    "lib/slick.dataview.js"
+    "lib/slickgrid/slick.core.js",
+    "lib/slickgrid/slick.grid.js",
+    "lib/slickgrid/slick.dataview.js"
   ],
   "ignore": [
   ],
