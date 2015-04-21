@@ -1,14 +1,18 @@
 {
   "name": "scalejs.grid-slick",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "homepage": "",
   "authors": [],
   "description": "",
   "main": [
     "dist/scalejs.grid-slick.js",
-    "lib/slickgrid/slick.core.js",
-    "lib/slickgrid/slick.grid.js",
-    "lib/slickgrid/slick.dataview.js"
+    "slickgrid/slick.core.js",
+    "slickgrid/slick.grid.js",
+    "slickgrid/slick.dataview.js",
+    "slickgrid/slick.editors.js",
+    "slickgrid/formatters.js",
+    "slickgrid/rowselectionmodel.js",
+    "slickgrid/jquery.event.drag.js"
   ],
   "ignore": [
   ],
