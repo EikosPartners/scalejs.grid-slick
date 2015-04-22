@@ -1,6 +1,6 @@
 {
   "name": "scalejs.grid-slick",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "homepage": "",
   "authors": [],
   "description": "",
@@ -22,7 +22,7 @@
     "knockout": "~3.3.0",
     "bpopup": "~0.11.0",
     "scalejs.mvvm": "lisovin/scalejs.mvvm#dev",
-    "scalejs.statechart-scion": "lisovin/scalejs.statechart-scion#dev"
+    "scalejs.statechart-scion": "EikosPartners/scalejs.statechart-scion"
   },
   "devDependencies": {
     "requirejs": "latest"
