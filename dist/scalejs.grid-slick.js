@@ -10,7 +10,7 @@ define('scalejs.grid-slick/observableDataview',[
     Slick
 ) {
     /// <param name="ko" value="window.ko" />
-    
+    "use strict";
 
 
     var isObservable = ko.isObservable,
@@ -142,7 +142,7 @@ define('scalejs.grid-slick/filters/observableFilters',[
     ko,
     filterTemplates
 ) {
-    
+    'use strict';
     /// <param name="ko" value="window.ko" />
 
     var statechart = core.state.builder.statechart,
@@ -780,6 +780,8 @@ define('scalejs.grid-slick/filters/defaultFilters',[
 
     return function (filterableColumns, itemsSource) {
         var filteredItemsSource,
+            currentColumns,
+            operations,
             evaluateFunc = {
                 EqualTo: function (s, v) { return parseFloat(s) === parseFloat(v) },
                 GreaterThan: function (s, v) { return parseFloat(s) > parseFloat(v) },
@@ -787,7 +789,7 @@ define('scalejs.grid-slick/filters/defaultFilters',[
                 NotEqualTo: function (s, v) { return parseFloat(s) !== parseFloat(v) },
                 In: function (s, v) { return v.some(function (x) { return s.match(new RegExp('^' + x + '$', 'i')); }); },
                 Contains: function (s, v) { return s.match(new RegExp(v, 'i')); },
-                StartsWith: function (s, v) { return s.match(new RegExp('^' + v, 'i')); },
+                StartsWith: function (s, v) { return s.toString().match(new RegExp('^' + v, 'i')); },
                 EndsWith: function (s, v) { return s.match(new RegExp(v + '$', 'i')); },
                 NotEmpty: function (s) { return s !== "" }
             };
@@ -821,55 +823,70 @@ define('scalejs.grid-slick/filters/defaultFilters',[
                 return has(x, on) ? lower(x[on]) : -Number.MAX_VALUE;
             };
         }
-
-        filterableColumns.forEach(function (c) {
-            var quickSearch = observable(''),
-                quickFilterOp = c.filter.quickFilterOp;
-            c.filter = {
-                type: c.filter.type,
-                quickFilterOp: quickFilterOp,
-                value: observable(),
-                quickSearch: quickSearch,
-                values: observable([])
+        
+        
+        function setupFilterableColumns() {
+            if (currentColumns) {
+                currentColumns.forEach(function (c) {
+                    c._quickSearchSubscription.dispose();
+                });          
             }
 
-            quickSearch.subscribe(function () {
-                //gets the initial list values based on current filters
-                var listValues = itemsSource()
-                        .where(function (v) {
-                            var keep = true;
-                            ops = operations.filter(function (o) {
-                                return o.id !== c.id
-                            });
-
-                            for (var i = 0; i < ops.length; i++) {
-                                keep = evaluateOperation(ops[i], v[ops[i].id])
-                                if (!keep) break;
-                            }
-                            return keep;
-                        })
-                    .distinct(function (r) { if (has(r[c.id])) return r[c.id] })
+            currentColumns = filterableColumns();
+            
+            filterableColumns().forEach(function (c) {
+                var quickSearch = observable(''),
+                    quickFilterOp = c.filter.quickFilterOp;
+                c.filter = {
+                    type: c.filter.type,
+                    quickFilterOp: quickFilterOp,
+                    value: observable(),
+                    quickSearch: quickSearch,
+                    values: observable([])
+                }
+                
+                c._quickSearchSubscription = quickSearch.subscribe(function () {
+                    //gets the initial list values based on current filters
+                    var listValues = itemsSource()
+                    .where(function (v) {
+                        var keep = true;
+                        ops = operations.filter(function (o) {
+                            return o.id !== c.id;
+                        });
+                        
+                        for (var i = 0; i < ops.length; i++) {
+                            keep = evaluateOperation(ops[i], v[ops[i].id]);
+                            if (!keep) break;
+                        }
+                        return keep;
+                    })
+                    .distinct(function (r) { if (has(r[c.id])) return r[c.id]; })
                     .orderBy(comparer(c.id))
                     .select(function (r) {
                         return valueOrDefault(r[c.id], "").toString();
                     });
+                    
+                    if (quickSearch().values[0]) {
+                        s = quickSearch().values[0].toLowerCase();
+                        listValues = listValues.where(function (v) {
+                            v = v.toLowerCase();
+                            
+                            if (quickFilterOp === "Contains") {
+                                return v.indexOf(s) !== -1;
+                            }
+                            return v.indexOf(s) === 0;
+                        });
+                    }
+                    c.filter.values(listValues.take(50).toArray());
+                });
+            });          
+        }
 
-                if (quickSearch().values[0]) {
-                    s = quickSearch().values[0].toLowerCase();
-                    listValues = listValues.where(function (v) {
-                        v = v.toLowerCase();
+        filterableColumns.subscribe(setupFilterableColumns);
+        setupFilterableColumns();
 
-                        if (quickFilterOp === "Contains") {
-                            return v.indexOf(s) !== -1;
-                        }
-                        return v.indexOf(s) === 0
-                    });
-                }
-                c.filter.values(listValues.take(50).toArray());
-            })
-        });
         filteredItemsSource = computed(function () {
-            operations = filterableColumns.selectMany(function (c) { return c.filter.value() }, function (c, v) {
+            operations = filterableColumns().selectMany(function (c) { return c.filter.value(); }, function (c, v) {
                 return {
                     id: c.id,
                     op: v.op,
@@ -1169,7 +1186,7 @@ define('scalejs.grid-slick/slickGrid',[
         valueOrDefault = core.object.valueOrDefault;
 
     function slickGrid(element, options) {
-        var columns = ko.unwrap(options.columns),
+        var columns = observable(ko.unwrap(options.columns)),
             internalItemsSource,
             dataView,
             grid,
@@ -1177,14 +1194,16 @@ define('scalejs.grid-slick/slickGrid',[
 
 
         function setupFilters(itemsSource) {
-            var filterableColumns = columns.filter(function (c) { return c.filter; }),
+            var filterableColumns = computed(function() {
+                    return columns().filter(function(c) { return c.filter; });
+                }),
                 filteredItemsSource;
 
             // if there are no filterable columns, no need to set up filters
-            if (filterableColumns.length === 0) return itemsSource;
+            if (filterableColumns().length === 0) return itemsSource;
 
             // if any filter doesnt have a value, we need to make it
-            if (filterableColumns.some(function (c) { return !c.filter.value })) {
+            if (filterableColumns().some(function (c) { return !c.filter.value; })) {
                 filteredItemsSource = defaultFilters(filterableColumns, itemsSource);
             } else {
                 filteredItemsSource = itemsSource;
@@ -1198,8 +1217,8 @@ define('scalejs.grid-slick/slickGrid',[
 
         function setupSorting(itemsSource) {
             var sorting = options.sorting,
-                sortableColumns = columns.filter(function (c) { return c.sortable; }),
-                sortedItemsSource
+                sortableColumns = columns().filter(function(c) { return c.sortable; }),
+                sortedItemsSource;
 
             // if sorting is undefined, we dont need to set up sorting
             if (sorting === undefined) return itemsSource;
@@ -1276,7 +1295,7 @@ define('scalejs.grid-slick/slickGrid',[
 
         function createGrid() {
             options.explicitInitialization = true;
-            grid = new Slick.Grid(element, dataView, columns, options);
+            grid = new Slick.Grid(element, dataView, columns(), options);
             $(element).data('slickgrid', grid);
 
             grid.setSelectionModel(new Slick.RowSelectionModel());
@@ -1284,14 +1303,14 @@ define('scalejs.grid-slick/slickGrid',[
             plugins.forEach(function (p) { p.init(grid); });
 
             if (isObservable(options.columns)) { 
-                    options.columns.subscribe(function () { 
-                    columns = ko.unwrap(options.columns); 
-                    grid.setColumns(columns); 
+                    options.columns.subscribe(function () {
+                    columns(ko.unwrap(options.columns));
+                    grid.setColumns(columns()); 
                 }); 
             } 
 
             if (options.changesFlasher) {
-                changesFlasher(grid, options.changesFlasher)
+                changesFlasher(grid, options.changesFlasher);
             }
 
             grid.init();
@@ -1387,7 +1406,6 @@ define('scalejs.grid-slick/slickGrid',[
         init: init
     };
 });
-
 /*global define*/
 define('scalejs.grid-slick',[
     './scalejs.grid-slick/slickGrid',
@@ -1397,7 +1415,7 @@ define('scalejs.grid-slick',[
     slickGrid,
     ko
 ) {
-    
+    'use strict';
 
     ko.bindingHandlers.slickGrid = slickGrid;
 });

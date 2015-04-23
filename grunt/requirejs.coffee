@@ -23,7 +23,6 @@ module.exports = ( grunt ) ->
                 , 'linqjs' 
                 , 'scalejs.statechart-scion'
                 , 'scalejs.linq-linqjs'
-                , 'scion-ng'
                 , 'jquery'
                 , 'antiscroll'
             ]

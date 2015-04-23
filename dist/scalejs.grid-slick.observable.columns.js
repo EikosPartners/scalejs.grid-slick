@@ -10,7 +10,7 @@ define('scalejs.grid-slick/observableDataview',[
     Slick
 ) {
     /// <param name="ko" value="window.ko" />
-    "use strict";
+    
 
 
     var isObservable = ko.isObservable,
@@ -142,7 +142,7 @@ define('scalejs.grid-slick/filters/observableFilters',[
     ko,
     filterTemplates
 ) {
-    'use strict';
+    
     /// <param name="ko" value="window.ko" />
 
     var statechart = core.state.builder.statechart,
@@ -1406,6 +1406,7 @@ define('scalejs.grid-slick/slickGrid',[
         init: init
     };
 });
+
 /*global define*/
 define('scalejs.grid-slick',[
     './scalejs.grid-slick/slickGrid',
@@ -1415,7 +1416,7 @@ define('scalejs.grid-slick',[
     slickGrid,
     ko
 ) {
-    'use strict';
+    
 
     ko.bindingHandlers.slickGrid = slickGrid;
 });

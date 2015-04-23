@@ -14,15 +14,15 @@
     "slickgrid/slick.rowselectionmodel.js",
     "slickgrid/jquery.event.drag.js"
   ],
-  "ignore": [
-  ],
+  "ignore": [],
   "dependencies": {
     "scalejs": "lisovin/scalejs#~0.4.0",
     "jquery": "~2.1.3",
     "knockout": "~3.3.0",
     "bpopup": "~0.11.0",
     "scalejs.mvvm": "lisovin/scalejs.mvvm#dev",
-    "scalejs.statechart-scion": "EikosPartners/scalejs.statechart-scion"
+    "scalejs.statechart-scion": "EikosPartners/scalejs.statechart-scion",
+    "antiscroll": "*"
   },
   "devDependencies": {
     "requirejs": "latest"

@@ -1,6 +1,6 @@
 ﻿/*global define*/
 /// <reference path="../Scripts/_references.js" />
-define([
+define('scalejs.grid-slick/slickGrid',[
     'scalejs!core',
     'require',
     'knockout',
@@ -42,7 +42,7 @@ define([
         valueOrDefault = core.object.valueOrDefault;
 
     function slickGrid(element, options) {
-        var columns = ko.unwrap(options.columns),
+        var columns = observable(ko.unwrap(options.columns)),
             internalItemsSource,
             dataView,
             grid,
@@ -50,14 +50,16 @@ define([
 
 
         function setupFilters(itemsSource) {
-            var filterableColumns = columns.filter(function (c) { return c.filter; }),
+            var filterableColumns = computed(function() {
+                    return columns().filter(function(c) { return c.filter; });
+                }),
                 filteredItemsSource;
 
             // if there are no filterable columns, no need to set up filters
-            if (filterableColumns.length === 0) return itemsSource;
+            if (filterableColumns().length === 0) return itemsSource;
 
             // if any filter doesnt have a value, we need to make it
-            if (filterableColumns.some(function (c) { return !c.filter.value })) {
+            if (filterableColumns().some(function (c) { return !c.filter.value; })) {
                 filteredItemsSource = defaultFilters(filterableColumns, itemsSource);
             } else {
                 filteredItemsSource = itemsSource;
@@ -71,8 +73,8 @@ define([
 
         function setupSorting(itemsSource) {
             var sorting = options.sorting,
-                sortableColumns = columns.filter(function (c) { return c.sortable; }),
-                sortedItemsSource
+                sortableColumns = columns().filter(function(c) { return c.sortable; }),
+                sortedItemsSource;
 
             // if sorting is undefined, we dont need to set up sorting
             if (sorting === undefined) return itemsSource;
@@ -149,7 +151,7 @@ define([
 
         function createGrid() {
             options.explicitInitialization = true;
-            grid = new Slick.Grid(element, dataView, columns, options);
+            grid = new Slick.Grid(element, dataView, columns(), options);
             $(element).data('slickgrid', grid);
 
             grid.setSelectionModel(new Slick.RowSelectionModel());
@@ -157,14 +159,14 @@ define([
             plugins.forEach(function (p) { p.init(grid); });
 
             if (isObservable(options.columns)) { 
-                    options.columns.subscribe(function () { 
-                    columns = ko.unwrap(options.columns); 
-                    grid.setColumns(columns); 
+                    options.columns.subscribe(function () {
+                    columns(ko.unwrap(options.columns));
+                    grid.setColumns(columns()); 
                 }); 
             } 
 
             if (options.changesFlasher) {
-                changesFlasher(grid, options.changesFlasher)
+                changesFlasher(grid, options.changesFlasher);
             }
 
             grid.init();

@@ -24,7 +24,6 @@ var require = {
     linqjs: '../lib/linqjs/linq',
     'scalejs.statechart-scion': '../lib/scalejs.statechart-scion/dist/scalejs.statechart-scion.min',
     'scalejs.linq-linqjs': '../lib/scalejs.linq-linqjs/dist/scalejs.linq-linqjs.min',
-    'scion-ng': '../lib/scion-ng/lib/scion',
     jquery: '../lib/jquery/dist/jquery',
     antiscroll: '../lib/antiscroll/antiscroll'
   },
