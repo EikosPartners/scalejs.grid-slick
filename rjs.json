@@ -1,0 +1,55 @@
+{
+    "shim": {
+        "jquery.event.drag": {
+            "deps": [
+                "jquery"
+            ]
+        },
+        "jquery.event.drag.live": {
+            "deps": [
+                "jquery.event.drag"
+            ]
+        },
+        "slick.core": {
+            "deps": [
+                "jquery"
+            ],
+            "exports": "Slick"
+        },
+        "slick.dataview": {
+            "deps": [
+                "slick.core"
+            ]
+        },
+        "slick.rowselectionmodel": {
+            "deps": [
+                "slick.core"
+            ]
+        },
+        "slick.editors": {
+            "deps": [
+                "jquery"
+            ]
+        },
+        "slick.formatters": {
+            "deps": [
+                "jquery"
+            ]
+        },
+        "slick.grid": {
+            "deps": [
+                "jquery",
+                "slick.core",
+                "slick.dataview",
+                "slick.rowselectionmodel",
+                "jquery.event.drag"
+            ],
+            "exports": "Slick"
+        },
+        "bpopup": {
+            "deps": [
+                "jquery"
+            ]
+        }
+    }
+}
