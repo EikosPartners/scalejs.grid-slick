@@ -1291,6 +1291,22 @@ define('scalejs.grid-slick/slickGrid',[
                 }
             });
             /*jslint unparam: false*/
+                        //debugger;
+            if (options.itemMetadataMapper) {
+
+                dataView.getItemMetadata = metadata(dataView.getItemMetadata);
+            }
+
+            
+        }
+        
+        function metadata(oldMetadata) {
+
+            return function(row) {
+                var item = this.getItem(row);
+                var meta = oldMetadata(row) || {};
+                return options.itemMetadataMapper(item, meta);
+            }
         }
 
         function createGrid() {
