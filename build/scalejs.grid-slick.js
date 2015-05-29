@@ -1401,6 +1401,11 @@ define('scalejs.grid-slick/slickGrid',[
         subscribeToSelection();
         subscribeToViewport();
         subscribeToLayout();
+
+        if ('function' === typeof options.access) {
+            options.access(element, grid, dataView);
+        }
+
     }
 
     /*jslint unparam:true*/
