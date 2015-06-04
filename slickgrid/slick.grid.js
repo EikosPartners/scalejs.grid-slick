@@ -890,6 +890,8 @@ if (typeof Slick === "undefined") {
       }
       el.remove();
 
+      headerColumnWidthGrid = 9;
+    
       var r = $("<div class='slick-row' />").appendTo($canvas);
       el = $("<div class='slick-cell' id='' style='visibility:hidden'>-</div>").appendTo(r);
       cellWidthDiff = cellHeightDiff = 0;
