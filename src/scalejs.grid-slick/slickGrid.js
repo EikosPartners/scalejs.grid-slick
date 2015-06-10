@@ -25,6 +25,7 @@ define('scalejs.grid-slick/slickGrid',[
     defaultSorting,
     changesFlasher
 ) {
+    'use strict';
 
 
     /// <param name="ko" value="window.ko" />
@@ -56,7 +57,9 @@ define('scalejs.grid-slick/slickGrid',[
                 filteredItemsSource;
 
             // if there are no filterable columns, no need to set up filters
-            if (filterableColumns().length === 0) return itemsSource;
+            if (filterableColumns().length === 0) {
+                return itemsSource;
+            }
 
             // if any filter doesnt have a value, we need to make it
             if (filterableColumns().some(function (c) { return !c.filter.value; })) {
@@ -77,7 +80,9 @@ define('scalejs.grid-slick/slickGrid',[
                 sortedItemsSource;
 
             // if sorting is undefined, we dont need to set up sorting
-            if (sorting === undefined) return itemsSource;
+            if (sorting === undefined) {
+                return itemsSource;
+            }
 
             // if custom sort is enabled, we don't need to make our own sortedItemsSource
             if (options.customSort) {

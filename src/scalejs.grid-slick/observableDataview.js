@@ -10,7 +10,7 @@ define([
     Slick
 ) {
     /// <param name="ko" value="window.ko" />
-    "use strict";
+    'use strict';
 
 
     var isObservable = ko.isObservable,

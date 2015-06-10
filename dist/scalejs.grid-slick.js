@@ -10,7 +10,7 @@ define('scalejs.grid-slick/observableDataview',[
     Slick
 ) {
     /// <param name="ko" value="window.ko" />
-    "use strict";
+    'use strict';
 
 
     var isObservable = ko.isObservable,
@@ -166,7 +166,7 @@ define('scalejs.grid-slick/filters/observableFilters',[
     function setupFilter(fieldFilter, column) {
         var filter = observable([]),
             quickSearch = observable(), //fieldFilter.quickSearch || observable(),
-            quickOp = fieldFilter.quickFilterOp || "StartsWith",
+            quickOp = fieldFilter.quickFilterOp || 'StartsWith',
             comp = {
                 a: observable(),
                 valA: observable(),
@@ -177,7 +177,7 @@ define('scalejs.grid-slick/filters/observableFilters',[
             allCheckbox = observable(true),
             loading = observable(false),
             listItems = fieldFilter.values,
-            quickFilter = observable(""),
+            quickFilter = observable(''),
             selectableListItems = observableArray([]),
             valExpression,
             listExpression,
@@ -197,8 +197,8 @@ define('scalejs.grid-slick/filters/observableFilters',[
 
             // Update quickFilter and quickSearch:
             if (!value || !value.values || !value.values.length) {
-                quickFilter("");
-                quickSearch("");
+                quickFilter('');
+                quickSearch('');
             } else {
                 quickFilter(value.values[0]);
                 quickSearch(value.values[0]);
@@ -235,7 +235,7 @@ define('scalejs.grid-slick/filters/observableFilters',[
             subscription.filter.dispose();
 
             var value = fieldFilter.value.peek() || [], // Get copy of value.
-                comps = fieldFilter.type === "string" ? ["Contains", "StartsWith", "EndsWith"] : ["EqualTo", "LessThan", "NotEqualTo", "GreaterThan"],
+                comps = fieldFilter.type === 'string' ? ['Contains', 'StartsWith', 'EndsWith'] : ['EqualTo', 'LessThan', 'NotEqualTo', 'GreaterThan'],
                 val;
 
             // all, list, or val
@@ -251,7 +251,7 @@ define('scalejs.grid-slick/filters/observableFilters',[
             }*/
 
             // Set NotEmpty to false if not in list:
-            if (value.indexOf("NotEmpty") === -1) {
+            if (value.indexOf('NotEmpty') === -1) {
                 notEmpty(false);
             }
 
@@ -267,12 +267,12 @@ define('scalejs.grid-slick/filters/observableFilters',[
             }
 
             value.forEach(function (filter, index) {
-                if (filter.op === "In") {
+                if (filter.op === 'In') {
                     // Apply In to all list items:
                     selectableListItems().forEach(function (item) {
                         item.selected(filter.values.indexOf(item.value) > -1);
                     });
-                } else if (filter.op === "NotEmpty") {
+                } else if (filter.op === 'NotEmpty') {
                     // Apply notEmpty:
                     notEmpty(true);
                 } else {
@@ -309,7 +309,7 @@ define('scalejs.grid-slick/filters/observableFilters',[
         function option(value, selected) {
             return {
                 selected: observable(has(selected) ? selected : allCheckbox()),
-                value: has(value) ? value.toString() : ""
+                value: has(value) ? value.toString() : ''
             };
         }
 
@@ -324,7 +324,7 @@ define('scalejs.grid-slick/filters/observableFilters',[
                     return option(item, filterValues.indexOf(item.toString()) > -1);
                 });
             } else {
-                items = newItems.groupJoin(selectableListItems(), "$.toString()", "$.value", function (o, i) {
+                items = newItems.groupJoin(selectableListItems(), '$.toString()', '$.value', function (o, i) {
                     return i.elementAtOrDefault(0, option(o));
                 }).toArray();
             }
@@ -351,7 +351,7 @@ define('scalejs.grid-slick/filters/observableFilters',[
 
             if (notEmpty()) {
                 expression.push({
-                    op: "NotEmpty",
+                    op: 'NotEmpty',
                     values: []
                 })
             }
@@ -410,7 +410,7 @@ define('scalejs.grid-slick/filters/observableFilters',[
             quickSearch: quickSearch,
             all: allCheckbox,
             options: selectableListItems,
-            popupTemplate: fieldFilter.type === "string" ? "string_filter_template" : "number_filter_template",
+            popupTemplate: fieldFilter.type === 'string' ? 'string_filter_template' : 'number_filter_template',
             value: quickFilter,
             filterOn: filterOn,
             flipped: flipped,
@@ -490,7 +490,7 @@ define('scalejs.grid-slick/filters/observableFilters',[
 
                 //sets the correct position of the arrow on the filter
                 var arrow = $popup.find('div')[0];
-                $(arrow).css("top", $filter.offset().top - offsetY);
+                $(arrow).css('top', $filter.offset().top - offsetY);
             });
         }
 
@@ -660,7 +660,7 @@ define('scalejs.grid-slick/filters/observableFilters',[
                         state('filter.list.hidden', whenIn('filter.shown', goto('filter.list.shown'))),
                         state('filter.list.shown',
                             onEntry(function () {
-                                quickFilter("");
+                                quickFilter('');
                                 subscription.all = allCheckbox.subscribe(function () {
                                     send('filter.all');
                                 });
@@ -674,7 +674,7 @@ define('scalejs.grid-slick/filters/observableFilters',[
                             onEntry(function (e) {
                                 //update ui
                                 uncheckAll();
-                                quickFilter("");
+                                quickFilter('');
 
                                 sendExpression(valExpression());
 
@@ -772,6 +772,7 @@ define('scalejs.grid-slick/filters/defaultFilters',[
     core,
     ko
 ) {
+    'use strict';
 
     var observable = ko.observable,
         computed = ko.computed,
@@ -791,20 +792,22 @@ define('scalejs.grid-slick/filters/defaultFilters',[
                 Contains: function (s, v) { return s.match(new RegExp(v, 'i')); },
                 StartsWith: function (s, v) { return s.toString().match(new RegExp('^' + v, 'i')); },
                 EndsWith: function (s, v) { return s.match(new RegExp(v + '$', 'i')); },
-                NotEmpty: function (s) { return s !== "" }
+                NotEmpty: function (s) { return s !== '' }
             };
 
 
         function evaluateOperation(e, v) {
-            var isValid;
-            evaluate = evaluateFunc[e.op];
+            var isValid,
+                evaluate = evaluateFunc[e.op];
 
-            if (e.op === "In" || e.op === "NotEmpty") {
+            if (e.op === 'In'|| e.op === 'NotEmpty') {
                 isValid = evaluate(v, e.values);
             } else {
                 for (var i = 0; i < e.values.length; i += 1) {
-                    isValid = evaluate(v, valueOrDefault(e.values[i], "").toString());
-                    if (!isValid) break;
+                    isValid = evaluate(v, valueOrDefault(e.values[i], '').toString());
+                    if (!isValid) {
+                        break;
+                    }
                 }
             }
 
@@ -812,7 +815,7 @@ define('scalejs.grid-slick/filters/defaultFilters',[
         }
 
         function lower(x) {
-            if (typeof x === "string") {
+            if (typeof x === 'string') {
                 return x.toLowerCase();
             }
             return x;
@@ -849,29 +852,31 @@ define('scalejs.grid-slick/filters/defaultFilters',[
                     //gets the initial list values based on current filters
                     var listValues = itemsSource()
                     .where(function (v) {
-                        var keep = true;
-                        ops = operations.filter(function (o) {
-                            return o.id !== c.id;
-                        });
+                        var keep = true,
+                            ops = operations.filter(function (o) {
+                                return o.id !== c.id;
+                            });
                         
-                        for (var i = 0; i < ops.length; i++) {
+                        for (var i = 0; i < ops.length; i+=1) {
                             keep = evaluateOperation(ops[i], v[ops[i].id]);
-                            if (!keep) break;
+                            if (!keep) {
+                                break;
+                            }
                         }
                         return keep;
                     })
-                    .distinct(function (r) { if (has(r[c.id])) return r[c.id]; })
+                    .distinct(function (r) { if (has(r[c.id])) { return r[c.id]; } })
                     .orderBy(comparer(c.id))
                     .select(function (r) {
-                        return valueOrDefault(r[c.id], "").toString();
+                        return valueOrDefault(r[c.id], '').toString();
                     });
                     
                     if (quickSearch().values[0]) {
-                        s = quickSearch().values[0].toLowerCase();
+                        var s = quickSearch().values[0].toLowerCase();
                         listValues = listValues.where(function (v) {
                             v = v.toLowerCase();
                             
-                            if (quickFilterOp === "Contains") {
+                            if (quickFilterOp === 'Contains') {
                                 return v.indexOf(s) !== -1;
                             }
                             return v.indexOf(s) === 0;
@@ -896,9 +901,11 @@ define('scalejs.grid-slick/filters/defaultFilters',[
             if (operations.length > 0) {
                 var newItems = itemsSource().filter(function (v) {
                     var keep;
-                    for (var i = 0; i < operations.length; i++) {
+                    for (var i = 0; i < operations.length; i+=1) {
                         keep = evaluateOperation(operations[i], v[operations[i].id])
-                        if (!keep) break;
+                        if (!keep) {
+                            break;
+                        }
                     }
                     return keep;
                 });
@@ -920,7 +927,8 @@ define('scalejs.grid-slick/sorting/observableSorting',[
     core,
     ko
 ) {
-    'use strict;'
+    'use strict';
+
     /// <param name="ko" value="window.ko" />
     return function observableSorting(sorting) {
         function init(grid) {
@@ -930,7 +938,7 @@ define('scalejs.grid-slick/sorting/observableSorting',[
                 var sort = args.multiColumnSort ? args.sortCols : [args];
 
                 sort = sort.reduce(function (sortObj, arg) {
-                    sortObj[arg.sortCol.field] = arg.sortAsc;
+                    sortObj[arg.sortCol.id] = arg.sortAsc;
                     return sortObj;
                 }, {});
 
@@ -939,7 +947,7 @@ define('scalejs.grid-slick/sorting/observableSorting',[
 
             // when sorting changes, set the sort columns on the grid
             ko.computed(function () {
-                if (sorting() === undefined) return;
+                if (sorting() === undefined) { return; }
                 var sortCols = Object.keys(sorting()).map(function (id) {
                     return {
                         columnId: id,
@@ -968,6 +976,8 @@ define('scalejs.grid-slick/sorting/defaultSorting',[
     core,
     ko
 ) {
+    'use strict';
+
     var has = core.object.has,
         computed = ko.computed;
 
@@ -977,7 +987,7 @@ define('scalejs.grid-slick/sorting/defaultSorting',[
             sortBy;
 
         function lower(x) {
-            if (typeof x === "string") {
+            if (typeof x === 'string') {
                 return x.toLowerCase();
             }
             return x;
@@ -1020,14 +1030,14 @@ define('scalejs.grid-slick/sorting/defaultSorting',[
         }
 
         sortedItemsSource = ko.computed(function () {
-            if (sorting() === undefined) return itemsSource();
+            if (sorting() === undefined) { return itemsSource(); }
             var sortCols = Object.keys(sorting()).map(function (id) {
                 return {
                     column: id,
                     sortAsc: sorting()[id]
                 }
             });
-            orderedItems = sortItems(itemsSource(), sortCols);
+            var orderedItems = sortItems(itemsSource(), sortCols);
             return orderedItems;
         });
 
@@ -1043,7 +1053,7 @@ define('scalejs.grid-slick/changesFlasher',[
     core
 ) {
     /// <param name="ko" value="window.ko" />
-
+    'use strict';
 
     /*jslint unparam: true*/
     return function changesFlasher(grid, opts) {
@@ -1169,6 +1179,7 @@ define('scalejs.grid-slick/slickGrid',[
     defaultSorting,
     changesFlasher
 ) {
+    'use strict';
 
 
     /// <param name="ko" value="window.ko" />
@@ -1200,7 +1211,9 @@ define('scalejs.grid-slick/slickGrid',[
                 filteredItemsSource;
 
             // if there are no filterable columns, no need to set up filters
-            if (filterableColumns().length === 0) return itemsSource;
+            if (filterableColumns().length === 0) {
+                return itemsSource;
+            }
 
             // if any filter doesnt have a value, we need to make it
             if (filterableColumns().some(function (c) { return !c.filter.value; })) {
@@ -1221,7 +1234,9 @@ define('scalejs.grid-slick/slickGrid',[
                 sortedItemsSource;
 
             // if sorting is undefined, we dont need to set up sorting
-            if (sorting === undefined) return itemsSource;
+            if (sorting === undefined) {
+                return itemsSource;
+            }
 
             // if custom sort is enabled, we don't need to make our own sortedItemsSource
             if (options.customSort) {

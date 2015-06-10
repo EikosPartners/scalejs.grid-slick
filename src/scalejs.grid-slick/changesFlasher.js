@@ -6,7 +6,7 @@ define([
     core
 ) {
     /// <param name="ko" value="window.ko" />
-
+    'use strict';
 
     /*jslint unparam: true*/
     return function changesFlasher(grid, opts) {

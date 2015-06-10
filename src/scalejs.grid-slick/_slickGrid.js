@@ -18,6 +18,7 @@ define([
     observableDataView
 ) {
 
+    'use strict';
 
     /// <param name="ko" value="window.ko" />
     var isObservable = ko.isObservable,

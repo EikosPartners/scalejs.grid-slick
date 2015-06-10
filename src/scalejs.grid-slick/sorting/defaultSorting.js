@@ -7,6 +7,8 @@ define([
     core,
     ko
 ) {
+    'use strict';
+
     var has = core.object.has,
         computed = ko.computed;
 
@@ -16,7 +18,7 @@ define([
             sortBy;
 
         function lower(x) {
-            if (typeof x === "string") {
+            if (typeof x === 'string') {
                 return x.toLowerCase();
             }
             return x;
@@ -59,14 +61,14 @@ define([
         }
 
         sortedItemsSource = ko.computed(function () {
-            if (sorting() === undefined) return itemsSource();
+            if (sorting() === undefined) { return itemsSource(); }
             var sortCols = Object.keys(sorting()).map(function (id) {
                 return {
                     column: id,
                     sortAsc: sorting()[id]
                 }
             });
-            orderedItems = sortItems(itemsSource(), sortCols);
+            var orderedItems = sortItems(itemsSource(), sortCols);
             return orderedItems;
         });
 

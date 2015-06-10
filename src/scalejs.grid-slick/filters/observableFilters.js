@@ -38,7 +38,7 @@ define([
     function setupFilter(fieldFilter, column) {
         var filter = observable([]),
             quickSearch = observable(), //fieldFilter.quickSearch || observable(),
-            quickOp = fieldFilter.quickFilterOp || "StartsWith",
+            quickOp = fieldFilter.quickFilterOp || 'StartsWith',
             comp = {
                 a: observable(),
                 valA: observable(),
@@ -49,7 +49,7 @@ define([
             allCheckbox = observable(true),
             loading = observable(false),
             listItems = fieldFilter.values,
-            quickFilter = observable(""),
+            quickFilter = observable(''),
             selectableListItems = observableArray([]),
             valExpression,
             listExpression,
@@ -69,8 +69,8 @@ define([
 
             // Update quickFilter and quickSearch:
             if (!value || !value.values || !value.values.length) {
-                quickFilter("");
-                quickSearch("");
+                quickFilter('');
+                quickSearch('');
             } else {
                 quickFilter(value.values[0]);
                 quickSearch(value.values[0]);
@@ -107,7 +107,7 @@ define([
             subscription.filter.dispose();
 
             var value = fieldFilter.value.peek() || [], // Get copy of value.
-                comps = fieldFilter.type === "string" ? ["Contains", "StartsWith", "EndsWith"] : ["EqualTo", "LessThan", "NotEqualTo", "GreaterThan"],
+                comps = fieldFilter.type === 'string' ? ['Contains', 'StartsWith', 'EndsWith'] : ['EqualTo', 'LessThan', 'NotEqualTo', 'GreaterThan'],
                 val;
 
             // all, list, or val
@@ -123,7 +123,7 @@ define([
             }*/
 
             // Set NotEmpty to false if not in list:
-            if (value.indexOf("NotEmpty") === -1) {
+            if (value.indexOf('NotEmpty') === -1) {
                 notEmpty(false);
             }
 
@@ -139,12 +139,12 @@ define([
             }
 
             value.forEach(function (filter, index) {
-                if (filter.op === "In") {
+                if (filter.op === 'In') {
                     // Apply In to all list items:
                     selectableListItems().forEach(function (item) {
                         item.selected(filter.values.indexOf(item.value) > -1);
                     });
-                } else if (filter.op === "NotEmpty") {
+                } else if (filter.op === 'NotEmpty') {
                     // Apply notEmpty:
                     notEmpty(true);
                 } else {
@@ -181,7 +181,7 @@ define([
         function option(value, selected) {
             return {
                 selected: observable(has(selected) ? selected : allCheckbox()),
-                value: has(value) ? value.toString() : ""
+                value: has(value) ? value.toString() : ''
             };
         }
 
@@ -196,7 +196,7 @@ define([
                     return option(item, filterValues.indexOf(item.toString()) > -1);
                 });
             } else {
-                items = newItems.groupJoin(selectableListItems(), "$.toString()", "$.value", function (o, i) {
+                items = newItems.groupJoin(selectableListItems(), '$.toString()', '$.value', function (o, i) {
                     return i.elementAtOrDefault(0, option(o));
                 }).toArray();
             }
@@ -223,7 +223,7 @@ define([
 
             if (notEmpty()) {
                 expression.push({
-                    op: "NotEmpty",
+                    op: 'NotEmpty',
                     values: []
                 })
             }
@@ -282,7 +282,7 @@ define([
             quickSearch: quickSearch,
             all: allCheckbox,
             options: selectableListItems,
-            popupTemplate: fieldFilter.type === "string" ? "string_filter_template" : "number_filter_template",
+            popupTemplate: fieldFilter.type === 'string' ? 'string_filter_template' : 'number_filter_template',
             value: quickFilter,
             filterOn: filterOn,
             flipped: flipped,
@@ -362,7 +362,7 @@ define([
 
                 //sets the correct position of the arrow on the filter
                 var arrow = $popup.find('div')[0];
-                $(arrow).css("top", $filter.offset().top - offsetY);
+                $(arrow).css('top', $filter.offset().top - offsetY);
             });
         }
 
@@ -532,7 +532,7 @@ define([
                         state('filter.list.hidden', whenIn('filter.shown', goto('filter.list.shown'))),
                         state('filter.list.shown',
                             onEntry(function () {
-                                quickFilter("");
+                                quickFilter('');
                                 subscription.all = allCheckbox.subscribe(function () {
                                     send('filter.all');
                                 });
@@ -546,7 +546,7 @@ define([
                             onEntry(function (e) {
                                 //update ui
                                 uncheckAll();
-                                quickFilter("");
+                                quickFilter('');
 
                                 sendExpression(valExpression());
 

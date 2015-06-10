@@ -7,7 +7,8 @@ define([
     core,
     ko
 ) {
-    'use strict;'
+    'use strict';
+
     /// <param name="ko" value="window.ko" />
     return function observableSorting(sorting) {
         function init(grid) {
@@ -17,7 +18,7 @@ define([
                 var sort = args.multiColumnSort ? args.sortCols : [args];
 
                 sort = sort.reduce(function (sortObj, arg) {
-                    sortObj[arg.sortCol.field] = arg.sortAsc;
+                    sortObj[arg.sortCol.id] = arg.sortAsc;
                     return sortObj;
                 }, {});
 
@@ -26,7 +27,7 @@ define([
 
             // when sorting changes, set the sort columns on the grid
             ko.computed(function () {
-                if (sorting() === undefined) return;
+                if (sorting() === undefined) { return; }
                 var sortCols = Object.keys(sorting()).map(function (id) {
                     return {
                         columnId: id,
